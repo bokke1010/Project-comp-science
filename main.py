@@ -5,20 +5,21 @@ from random import randrange, random
 
 CELL = {
     "EMPTY" : 1,
-    "FISH"  : 2
+    "FISH"  : 2,
+    "SHARK" : 3
 }
 
 #REMEMBER: 0,0 is top left
 DIRS = {
-    "N"  : 0,
-    "NE" : 1,
-    "E"  : 2,
-    "SE" : 3,
-    "S"  : 4,
-    "SW" : 5,
-    "W"  : 6,
-    "NW" : 7,
-    "NONE" : 8,
+    "N"     : 0,
+    "NE"    : 1,
+    "E"     : 2,
+    "SE"    : 3,
+    "S"     : 4,
+    "SW"    : 5,
+    "W"     : 6,
+    "NW"    : 7,
+    "NONE"  : 8,
     "MARKED": 9
 }
 
@@ -28,14 +29,14 @@ dir_symbs = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖', 'o', 'X']
 dir_to_offset = [(0,-1),(1,-1), (1,0), (1,1), (0,1), (-1, 1), (-1, 0), (-1, -1), (0,0)]
 
 offset_to_dir = {
-    (0,-1)   : 0,
-    (1,-1)   : 1,
+    (0,-1)  : 0,
+    (1,-1)  : 1,
     (1,0)   : 2,
-    (1,1)  : 3,
-    (0,1)  : 4,
-    (-1, 1): 5,
+    (1,1)   : 3,
+    (0,1)   : 4,
+    (-1, 1) : 5,
     (-1, 0) : 6,
-    (-1, -1) : 7,
+    (-1, -1): 7,
     (0,0)   : 8
 }
 
@@ -61,6 +62,8 @@ class Grid_cell:
     def __repr__(self):
         if self.cell_type == CELL["EMPTY"]:
             return " "
+        elif self.cell_type == CELL["SHARK"]:
+            return "S"
         else:
             return dir_symbs[self.cell_dir]
     # def __str__(self):
@@ -83,7 +86,7 @@ class Grid():
     def get_position(self, x,y) -> Grid_cell:
         return self.grid[y%GRID_Y][x%GRID_X]
 
-    def populate_grid(self, count, radius, chance):
+    def populate_grid_with_fish(self, count, radius, chance):
         for i in range(count):
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
             for x in range(cluster_x-radius, cluster_x+radius+1):
@@ -93,6 +96,14 @@ class Grid():
                         fish_cell.cell_type = CELL["FISH"]
                         fish_cell.cell_dir = randrange(0,8)
                         self.set_position(x,y, fish_cell)
+
+    def populate_grid_with_sharks(self, count):
+        for i in range(count):
+            x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            shark_cell = Grid_cell()
+            shark_cell.cell_type = CELL["SHARK"]
+            # shark_cell.cell_dir = randrange(0, 9)
+            self.set_position(x, y, shark_cell)
 
     def clear(self):
         for y in range(0, GRID_Y):

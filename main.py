@@ -86,7 +86,7 @@ class Grid():
     def get_position(self, x,y) -> Grid_cell:
         return self.grid[y%GRID_Y][x%GRID_X]
 
-    def populate_grid_with_fish(self, count, radius, chance):
+    def populate_fish(self, count, radius, chance):
         for i in range(count):
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
             for x in range(cluster_x-radius, cluster_x+radius+1):
@@ -97,7 +97,7 @@ class Grid():
                         fish_cell.cell_dir = randrange(0,8)
                         self.set_position(x,y, fish_cell)
 
-    def populate_grid_with_sharks(self, count):
+    def populate_sharks(self, count):
         for i in range(count):
             x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
             shark_cell = Grid_cell()
@@ -170,5 +170,5 @@ def iterate_grid(grid, steps):
 
 grid = Grid()
 
-grid.populate_grid(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
+grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
 grid = iterate_grid(grid, 8)

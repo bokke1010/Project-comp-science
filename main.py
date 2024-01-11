@@ -39,6 +39,19 @@ offset_to_dir = {
     (0,0)   : 8
 }
 
+def print_hline(len, up = True, down = True):
+    s, e = None, None
+    if up and down:
+        s, e = '├', '┤'
+    elif up and not down:
+        s, e = '└', '┘'
+    elif down and not up:
+        s, e = '┌', '┐'
+    else:
+        s, e = '╶', '╴'
+    
+    print(s + '─' * (len - 2) + e)
+
 
 @dataclass
 class Grid_cell:
@@ -62,7 +75,7 @@ class Grid():
         self.grid  = [[Grid_cell()] * GRID_X for _ in range(GRID_Y)]
 
     def __repr__(self):
-        return "\n".join(" ".join(map(repr, line)) for line in self.grid)
+        return '│' + "│\n│".join(" ".join(map(repr, line)) for line in self.grid) + '│'
 
     def set_position(self, x, y, value):
         self.grid[y%GRID_Y][x%GRID_X] = value
@@ -78,7 +91,7 @@ class Grid():
                     if random() < chance:
                         fish_cell = Grid_cell()
                         fish_cell.cell_type = CELL["FISH"]
-                        fish_cell.cell_dir = randrange(0,9)
+                        fish_cell.cell_dir = randrange(0,8)
                         self.set_position(x,y, fish_cell)
 
     def clear(self):
@@ -90,7 +103,7 @@ def sgn(n):
     return int(n > 0) - int(n < 0)
 
 def assign_direction(old_grid, new_grid, x, y): # single fish alignment
-    sx, sy = 0, 0;
+    sx, sy = 0, 0
     for (dx, dy) in dir_to_offset[0:8]:
         other_pos = old_grid.get_position(x + dx, y + dy)
         if other_pos.cell_type == CELL["EMPTY"]:
@@ -98,11 +111,13 @@ def assign_direction(old_grid, new_grid, x, y): # single fish alignment
         other_dir = other_pos.cell_dir
         sx += dir_to_offset[other_dir][0]
         sy += dir_to_offset[other_dir][1]
-    # print(x, y, ": ", sx,sy)
-    new_fish = Grid_cell()
-    new_fish.cell_type = CELL['FISH']
-    new_fish.cell_dir = offset_to_dir[(sgn(sx), sgn(sy))]
-    new_grid.set_position(x,y, new_fish)
+    if sx != 0 or sy != 0:
+        new_fish = Grid_cell()
+        new_fish.cell_type = CELL['FISH']
+        new_fish.cell_dir = offset_to_dir[(sgn(sx), sgn(sy))]
+        new_grid.set_position(x,y, new_fish)
+    else:
+        new_grid.set_position(x,y, old_grid.get_position(x, y))
 
 
 
@@ -130,12 +145,13 @@ def move_fish(old_grid, new_grid): # finialize timestep
 
 def iterate_grid(grid, steps):
     new_grid = Grid()
-    for _ in range(steps):
+    print_hline(GRID_X * 2 + 1, False, True)
+    for i in range(steps):
         new_grid.clear()
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
         print(new_grid)
-        print('---------------------------------------')
+        print_hline(GRID_X * 2 + 1, True, i != steps - 1)
         grid, new_grid = new_grid, grid
     return grid
 
@@ -144,7 +160,4 @@ def iterate_grid(grid, steps):
 grid = Grid()
 
 grid.populate_grid(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
-# print(grid)
-# print('---------------------------')
-grid = iterate_grid(grid, 5)
-# print(grid)
+grid = iterate_grid(grid, 8)

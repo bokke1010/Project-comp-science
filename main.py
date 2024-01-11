@@ -54,6 +54,13 @@ def print_hline(len, up = True, down = True):
     print(s + '─' * (len - 2) + e)
 
 
+def get_neighbourhood_offsets(r = 1):
+    for x in range(-r, r+1):
+        for y in range(-r, r+1):
+            if x == 0 and y == 0:
+                continue
+            yield (x,y)
+
 @dataclass
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
@@ -115,7 +122,7 @@ def sgn(n):
 
 def assign_direction(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
-    for (dx, dy) in dir_to_offset[0:8]:
+    for (dx, dy) in get_neighbourhood_offsets(FISH_VISION):
         other_pos = old_grid.get_position(x + dx, y + dy)
         if other_pos.cell_type == CELL["EMPTY"]:
             continue

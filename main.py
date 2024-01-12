@@ -1,6 +1,8 @@
 from parameters import *
 from dataclasses import dataclass
 from random import randrange, random
+from math import sin, cos, atan2, pi, floor, ceil
+import numpy as np
 
 
 CELL = {
@@ -10,35 +12,20 @@ CELL = {
 }
 
 #REMEMBER: 0,0 is top left
-DIRS = {
-    "N"     : 0,
-    "NE"    : 1,
-    "E"     : 2,
-    "SE"    : 3,
-    "S"     : 4,
-    "SW"    : 5,
-    "W"     : 6,
-    "NW"    : 7,
-    "NONE"  : 8,
-    "MARKED": 9
-}
+DIR_COUNT = 6
 
-# Direction symbols, including marker
-dir_symbs = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖', 'o', 'X']
+# Direction symbols in order of ascending angle, including marker
+dir_symbs = ['→', '↘', '↙', '←', '↖', '↗']
 
-dir_to_offset = [(0,-1),(1,-1), (1,0), (1,1), (0,1), (-1, 1), (-1, 0), (-1, -1), (0,0)]
+dir_to_angle = [0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3]
 
-offset_to_dir = {
-    (0,-1)  : 0,
-    (1,-1)  : 1,
-    (1,0)   : 2,
-    (1,1)   : 3,
-    (0,1)   : 4,
-    (-1, 1) : 5,
-    (-1, 0) : 6,
-    (-1, -1): 7,
-    (0,0)   : 8
-}
+def angle_to_dir(angle):
+    part = 2 * pi / DIR_COUNT
+    return int((angle + part/2) / part) % DIR_COUNT
+
+# Do not try to calculate the direction of a zero vector
+def offset_to_dir(x, y):
+    return angle_to_dir(atan2(y, x))
 
 def print_hline(len, up = True, down = True):
     s, e = None, None
@@ -53,18 +40,60 @@ def print_hline(len, up = True, down = True):
     
     print(s + '─' * (len - 2) + e)
 
+def unit_vector(angle):
+    return np.array([cos(angle), sin(angle)])
 
-def get_neighbourhood_offsets(r = 1):
-    for x in range(-r, r+1):
+def dir_to_pos(x, y, dir, dist):
+    if GRID_MODE == MODE_4:
+        pass
+    elif GRID_MODE == MODE_6:
+        m = y & 1
+        nx = 0
+        if dir % 3 == 0: # East, West
+            nx = dist * (1-2 * (dir // 3))
+        elif dir & 1 == 0: # Northwest, southwest
+            # if m=0, decrement x on 1, 3, 5 etc
+            # if m=1, decrement x on 2, 4, 6 etc
+            nx = x - (dist + 1 - m) // 2
+        else: # Northeast, southeast
+            nx = x + (dist + m) // 2
+
+        # ny = 1,2 is +1 | 0, 3 is 0 | 4, 5 is -1
+        ny = dist * int(dir % 3 != 0) * (1 - 2 * (dir // 3))
+        return np.array([nx, ny])
+    elif GRID_MODE == MODE_8:
+        pass
+
+def get_neighbourhood(mx, my, r = 1, include_self = False):
+    if GRID_MODE == MODE_4:
+        for x in range(-r, r+1):
+            for y in range(-r + abs(x), r + 1 - abs(x)):
+                if x == 0 and y == 0 and not include_self:
+                    continue
+                yield np.array([mx + x, my + y])
+    elif GRID_MODE == MODE_6:
+        # Odd rows are shifted 1/2 to the right
+        # m is 1 if we are on an odd row
+        m = my & 1
         for y in range(-r, r+1):
-            if x == 0 and y == 0:
-                continue
-            yield (x,y)
+            # X range goes from r+1 elements to 2r+1 elements
+            for x in range(-r + (abs(y + m) // 2), r + 1 - ((abs(y) + 1 - m) // 2)):
+                if x == 0 and y == 0 and not include_self:
+                    continue
+                yield np.array([mx + x, my + y])
+
+
+    elif GRID_MODE == MODE_8:
+        for x in range(-r, r+1):
+            for y in range(-r, r+1):
+                if x == 0 and y == 0 and not include_self:
+                    continue
+                yield np.array([mx + x, my + y])
 
 @dataclass
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
-    cell_dir: int = DIRS["NONE"]
+    cell_dir: int = 0 # Unused by default
 
     def __repr__(self):
         if self.cell_type == CELL["EMPTY"]:
@@ -85,10 +114,11 @@ class Grid():
         self.grid  = [[Grid_cell()] * GRID_X for _ in range(GRID_Y)]
 
     def __repr__(self):
-        return '│' + "│\n│".join(" ".join(map(repr, line)) for line in self.grid) + '│'
+        return '│' + "│\n│".join((' ' * (i & 1)) + " ".join(map(repr, line)) + (' ' * (1 - (i & 1))) for (i, line) in enumerate(self.grid)) + '│'
 
     def set_position(self, x, y, value):
         self.grid[y%GRID_Y][x%GRID_X] = value
+        # Can be made more efficient by limiting to [-l, l] and letting python handle it
 
     def get_position(self, x,y) -> Grid_cell:
         return self.grid[y%GRID_Y][x%GRID_X]
@@ -96,13 +126,14 @@ class Grid():
     def populate_fish(self, count, radius, chance):
         for i in range(count):
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
-            for x in range(cluster_x-radius, cluster_x+radius+1):
-                for y in range(cluster_y-radius, cluster_y+radius+1):
-                    if random() < chance:
-                        fish_cell = Grid_cell()
-                        fish_cell.cell_type = CELL["FISH"]
-                        fish_cell.cell_dir = randrange(0,8)
-                        self.set_position(x,y, fish_cell)
+            print(cluster_x, cluster_y)
+            for (x, y) in get_neighbourhood(cluster_x, cluster_y, radius, True):
+                print(x, y) 
+                if random() < chance:
+                    fish_cell = Grid_cell()
+                    fish_cell.cell_type = CELL["FISH"]
+                    fish_cell.cell_dir = randrange(0,DIR_COUNT) # None is no optionn
+                    self.set_position(x,y, fish_cell)
 
     def populate_sharks(self, count):
         for i in range(count):
@@ -117,22 +148,22 @@ class Grid():
             for x in range(0, GRID_X):
                 self.grid[y][x] = Grid_cell()
 
-def sgn(n):
-    return int(n > 0) - int(n < 0)
+# def sgn(n):
+#     return int(n > 0) - int(n < 0)
 
 def assign_direction(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
-    for (dx, dy) in get_neighbourhood_offsets(FISH_VISION):
+    for (dx, dy) in get_neighbourhood(x, y, FISH_VISION):
         other_pos = old_grid.get_position(x + dx, y + dy)
         if other_pos.cell_type == CELL["EMPTY"]:
             continue
-        other_dir = other_pos.cell_dir
-        sx += dir_to_offset[other_dir][0]
-        sy += dir_to_offset[other_dir][1]
+        other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
+        sx += other_dir[0]
+        sy += other_dir[1]
     if sx != 0 or sy != 0:
         new_fish = Grid_cell()
         new_fish.cell_type = CELL['FISH']
-        new_fish.cell_dir = offset_to_dir[(sgn(sx), sgn(sy))]
+        new_fish.cell_dir = offset_to_dir(sx, sy)
         new_grid.set_position(x,y, new_fish)
     else:
         new_grid.set_position(x,y, old_grid.get_position(x, y))
@@ -152,8 +183,8 @@ def move_fish(old_grid, new_grid): # finialize timestep
             o_cell = old_grid.get_position(x,y)
             if o_cell.cell_type != CELL["FISH"]:
                 continue
-            offset = dir_to_offset[n_cell.cell_dir]
-            nx, ny = x + offset[0], y + offset[1]
+
+            (nx, ny) = dir_to_pos(x, y, n_cell.cell_dir, 1)
             m_cell = new_grid.get_position(nx, ny)
             if m_cell.cell_type != CELL["EMPTY"]:
                 continue
@@ -163,19 +194,18 @@ def move_fish(old_grid, new_grid): # finialize timestep
 
 def iterate_grid(grid, steps):
     new_grid = Grid()
-    print_hline(GRID_X * 2 + 1, False, True)
+    print_hline(GRID_X * 2 + 2, False, True)
     for i in range(steps):
         new_grid.clear()
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
         print(new_grid)
-        print_hline(GRID_X * 2 + 1, True, i != steps - 1)
+        print_hline(GRID_X * 2 + 2, True, i != steps - 1)
         grid, new_grid = new_grid, grid
     return grid
 
+if __name__ == "__main__":
+    grid = Grid()
 
-
-grid = Grid()
-
-grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
-grid = iterate_grid(grid, 8)
+    grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
+    grid = iterate_grid(grid, 8)

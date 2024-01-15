@@ -21,8 +21,8 @@ dir_to_angle = [0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3]
 
 def angle_to_dir(angle):
     part = 2 * pi / DIR_COUNT
-    result = int((angle + part/2) / part) % DIR_COUNT
-    print(angle / pi, result)
+    result = int(floor((angle + part/2) / part)) % DIR_COUNT
+    # print(angle / pi, result)
     return result
 
 # Do not try to calculate the direction of a zero vector

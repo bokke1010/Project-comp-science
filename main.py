@@ -180,17 +180,18 @@ def assign_directions(old_grid, new_grid): # alignment rule
 def move_fish(old_grid, new_grid): # finialize timestep
     for y in range(GRID_Y):
         for x in range(GRID_X):
-            n_cell = new_grid.get_position(x,y)
-            o_cell = old_grid.get_position(x,y)
-            if o_cell.cell_type != CELL["FISH"]:
+            new_local_cell = new_grid.get_position(x,y)
+            old_local_cell = old_grid.get_position(x,y)
+            if old_local_cell.cell_type != CELL["FISH"]:
                 continue
 
-            (nx, ny) = dir_to_pos(x, y, n_cell.cell_dir, 1)
-            m_cell = new_grid.get_position(nx, ny)
-            if m_cell.cell_type != CELL["EMPTY"]:
+            (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
+            new_moved_cell = new_grid.get_position(nx, ny)
+            old_moved_cell = old_grid.get_position(nx, ny)
+            if new_moved_cell.cell_type != CELL["EMPTY"] or old_moved_cell.cell_type != CELL["EMPTY"]:
                 continue
             new_grid.set_position(x,y, Grid_cell())
-            new_grid.set_position(nx, ny, n_cell)
+            new_grid.set_position(nx, ny, new_local_cell)
 
 
 def iterate_grid(grid, steps):

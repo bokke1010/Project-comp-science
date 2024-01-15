@@ -8,8 +8,11 @@ import numpy as np
 CELL = {
     "EMPTY" : 1,
     "FISH"  : 2,
-    "SHARK" : 3
+    "SHARK" : 3,
+    "FOOD"  : 4
 }
+
+FISH_REPLACEABLE = [CELL["EMPTY"], CELL["FOOD"]]
 
 #REMEMBER: 0,0 is top left
 DIR_COUNT = 6
@@ -101,6 +104,8 @@ class Grid_cell:
             return " "
         elif self.cell_type == CELL["SHARK"]:
             return "S"
+        elif self.cell_type == CELL["FOOD"]:
+            return "F"
         else:
             return dir_symbs[self.cell_dir]
     # def __str__(self):
@@ -142,8 +147,13 @@ class Grid():
             # shark_cell.cell_dir = randrange(0, 9)
             self.set_position(x, y, shark_cell)
 
-    def place_food(self, _):
-        pass
+    def place_food(self, count):
+        for i in range(count):
+            x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            food_cell = Grid_cell()
+            food_cell.cell_type = CELL["FOOD"]
+            self.set_position(x, y, food_cell)
+
 
     def clear(self):
         for y in range(0, GRID_Y):
@@ -155,12 +165,18 @@ class Grid():
 
 def assign_direction(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
-    found = 0
     for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
         other_pos = old_grid.get_position(nx, ny)
-        if other_pos.cell_type == CELL["EMPTY"]:
+        if other_pos.cell_type == CELL["FOOD"]:
+            sx += FOOD_ATTRACTION * (nx - x)
+            sy += FOOD_ATTRACTION * (ny - y)
+        elif other_pos.cell_type == CELL["FISH"]:
+            other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
+            sx += other_dir[0]
+            sy += other_dir[1]
+        else:
             continue
-        found += 1
+
         other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
         sx += other_dir[0]
         sy += other_dir[1]
@@ -191,7 +207,7 @@ def move_fish(old_grid, new_grid): # finialize timestep
             (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
             new_moved_cell = new_grid.get_position(nx, ny)
             old_moved_cell = old_grid.get_position(nx, ny)
-            if new_moved_cell.cell_type != CELL["EMPTY"] or old_moved_cell.cell_type != CELL["EMPTY"]:
+            if (new_moved_cell.cell_type not in FISH_REPLACEABLE) or (old_moved_cell.cell_type not in FISH_REPLACEABLE):
                 continue
             new_grid.set_position(x,y, Grid_cell())
             new_grid.set_position(nx, ny, new_local_cell)
@@ -204,6 +220,7 @@ def iterate_grid(grid, steps):
     print_hline(GRID_X * 2 + 2, True, True)
     for i in range(steps):
         new_grid.clear()
+        new_grid.place_food(8)
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
         print(new_grid)

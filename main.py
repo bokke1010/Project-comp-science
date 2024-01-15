@@ -212,4 +212,5 @@ if __name__ == "__main__":
     grid = Grid()
 
     grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
+    grid.populate_sharks(5)
     grid = iterate_grid(grid, 5)

@@ -47,20 +47,19 @@ def dir_to_pos(x, y, dir, dist):
     if GRID_MODE == MODE_4:
         pass
     elif GRID_MODE == MODE_6:
+        assert 0 <= dir < 6
         m = y & 1
         nx = 0
         if dir % 3 == 0: # East, West
             nx = dist * (1-2 * (dir // 3))
         elif dir & 1 == 0: # Northwest, southwest
-            # if m=0, decrement x on 1, 3, 5 etc
-            # if m=1, decrement x on 2, 4, 6 etc
-            nx = x - (dist + 1 - m) // 2
+            nx = - (dist - m) // 2
         else: # Northeast, southeast
-            nx = x + (dist + m) // 2
+            nx = (dist + m) // 2
 
         # ny = 1,2 is +1 | 0, 3 is 0 | 4, 5 is -1
         ny = dist * int(dir % 3 != 0) * (1 - 2 * (dir // 3))
-        return np.array([nx, ny])
+        return np.array([x + nx, y + ny])
     elif GRID_MODE == MODE_8:
         pass
 

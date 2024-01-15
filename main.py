@@ -21,7 +21,9 @@ dir_to_angle = [0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3]
 
 def angle_to_dir(angle):
     part = 2 * pi / DIR_COUNT
-    return int((angle + part/2) / part) % DIR_COUNT
+    result = int((angle + part/2) / part) % DIR_COUNT
+    print(angle / pi, result)
+    return result
 
 # Do not try to calculate the direction of a zero vector
 def offset_to_dir(x, y):
@@ -150,10 +152,12 @@ class Grid():
 
 def assign_direction(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
-    for (nx, nx) in get_neighbourhood(x, y, FISH_VISION):
-        other_pos = old_grid.get_position(nx, nx)
+    found = 0
+    for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
+        other_pos = old_grid.get_position(nx, ny)
         if other_pos.cell_type == CELL["EMPTY"]:
             continue
+        found += 1
         other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
         sx += other_dir[0]
         sy += other_dir[1]
@@ -192,6 +196,8 @@ def move_fish(old_grid, new_grid): # finialize timestep
 def iterate_grid(grid, steps):
     new_grid = Grid()
     print_hline(GRID_X * 2 + 2, False, True)
+    print(grid)
+    print_hline(GRID_X * 2 + 2, True, True)
     for i in range(steps):
         new_grid.clear()
         assign_directions(grid, new_grid)
@@ -205,4 +211,4 @@ if __name__ == "__main__":
     grid = Grid()
 
     grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
-    grid = iterate_grid(grid, 8)
+    grid = iterate_grid(grid, 5)

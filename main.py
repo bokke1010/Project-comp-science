@@ -142,6 +142,9 @@ class Grid():
             # shark_cell.cell_dir = randrange(0, 9)
             self.set_position(x, y, shark_cell)
 
+    def place_food(self, _):
+        pass
+
     def clear(self):
         for y in range(0, GRID_Y):
             for x in range(0, GRID_X):

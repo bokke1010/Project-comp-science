@@ -76,7 +76,7 @@ def get_neighbourhood(mx, my, r = 1, include_self = False):
         m = my & 1
         for y in range(-r, r+1):
             # X range goes from r+1 elements to 2r+1 elements
-            for x in range(-r + (abs(y + m) // 2), r + 1 - ((abs(y) + 1 - m) // 2)):
+            for x in range(-r + ((abs(y) + m) // 2), r + 1 - ((abs(y) + 1 - m) // 2)):
                 if x == 0 and y == 0 and not include_self:
                     continue
                 yield np.array([mx + x, my + y])
@@ -125,9 +125,7 @@ class Grid():
     def populate_fish(self, count, radius, chance):
         for i in range(count):
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
-            print(cluster_x, cluster_y)
             for (x, y) in get_neighbourhood(cluster_x, cluster_y, radius, True):
-                print(x, y) 
                 if random() < chance:
                     fish_cell = Grid_cell()
                     fish_cell.cell_type = CELL["FISH"]
@@ -152,20 +150,20 @@ class Grid():
 
 def assign_direction(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
-    for (dx, dy) in get_neighbourhood(x, y, FISH_VISION):
-        other_pos = old_grid.get_position(x + dx, y + dy)
+    for (nx, nx) in get_neighbourhood(x, y, FISH_VISION):
+        other_pos = old_grid.get_position(nx, nx)
         if other_pos.cell_type == CELL["EMPTY"]:
             continue
         other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
         sx += other_dir[0]
         sy += other_dir[1]
-    if sx != 0 or sy != 0:
+    if sx == 0 and sy == 0:
+        new_grid.set_position(x,y, old_grid.get_position(x, y))
+    else:
         new_fish = Grid_cell()
         new_fish.cell_type = CELL['FISH']
         new_fish.cell_dir = offset_to_dir(sx, sy)
         new_grid.set_position(x,y, new_fish)
-    else:
-        new_grid.set_position(x,y, old_grid.get_position(x, y))
 
 
 

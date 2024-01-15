@@ -98,6 +98,7 @@ def get_neighbourhood(mx, my, r = 1, include_self = False):
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
     cell_dir: int = 0 # Unused by default
+    food_lifespan: int = 0
 
     def __repr__(self):
         if self.cell_type == CELL["EMPTY"]:
@@ -147,12 +148,31 @@ class Grid():
             # shark_cell.cell_dir = randrange(0, 9)
             self.set_position(x, y, shark_cell)
 
-    def place_food(self, count):
+    # def place_food(self, count):
+    #     for i in range(count):
+    #         x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+    #         food_cell = Grid_cell()
+    #         food_cell.cell_type = CELL["FOOD"]
+    #         self.set_position(x, y, food_cell)
+
+    def place_food(self, count, lifespan):
         for i in range(count):
             x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
             food_cell = Grid_cell()
             food_cell.cell_type = CELL["FOOD"]
+            food_cell.food_lifespan = lifespan
             self.set_position(x, y, food_cell)
+
+    def regenerate_food(self):
+        for y in range(GRID_Y):
+            for x in range(GRID_X):
+                cell = self.grid[y][x]
+                if cell.cell_type == CELL["FOOD"] and cell.food_lifespan > 0:
+                    cell.food_lifespan -= 1
+                    if cell.food_lifespan == 0:
+                        # Food has reached the end of its lifespan, replace with an empty cell
+                        self.set_position(x, y, Grid_cell())
+
 
 
     def clear(self):
@@ -220,9 +240,10 @@ def iterate_grid(grid, steps):
     print_hline(GRID_X * 2 + 2, True, True)
     for i in range(steps):
         new_grid.clear()
-        new_grid.place_food(8)
+        new_grid.place_food(8, 10)
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
+        new_grid.regenerate_food()
         print(new_grid)
         print_hline(GRID_X * 2 + 2, True, i != steps - 1)
         grid, new_grid = new_grid, grid

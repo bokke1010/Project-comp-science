@@ -1,9 +1,10 @@
 from parameters import *
 from dataclasses import dataclass
-from random import randrange, random
+from random import randrange, random, choice
 from math import sin, cos, atan2, pi, floor, ceil
 import numpy as np
 import visualize
+
 
 CELL = {
     "EMPTY" : 1,
@@ -150,17 +151,21 @@ class Grid():
 # def sgn(n):
 #     return int(n > 0) - int(n < 0)
 
-def assign_direction(old_grid, new_grid, x, y): # single fish alignment
+def assign_direction_for_fish(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
     found = 0
     for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
         other_pos = old_grid.get_position(nx, ny)
-        if other_pos.cell_type == CELL["EMPTY"]:
-            continue
-        found += 1
-        other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
-        sx += other_dir[0]
-        sy += other_dir[1]
+        # Assert fish present
+        if other_pos.cell_type == CELL["FISH"]:
+            other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
+            sx += other_dir[0]
+            sy += other_dir[1]
+        # If shark present, influence to other direction
+        elif other_pos.cell_type == CELL["SHARK"]:
+            sx += SHARK_FACTOR * (x - nx)
+            sy += SHARK_FACTOR * (y - ny)
+
     if sx == 0 and sy == 0:
         new_grid.set_position(x,y, old_grid.get_position(x, y))
     else:
@@ -169,13 +174,38 @@ def assign_direction(old_grid, new_grid, x, y): # single fish alignment
         new_fish.cell_dir = offset_to_dir(sx, sy)
         new_grid.set_position(x,y, new_fish)
 
+def assign_direction_for_sharks(old_grid, new_grid, x, y):
+    fish_positions = [(nx, ny) for (nx, ny) in get_neighbourhood(x, y, FISH_VISION)
+                      if old_grid.get_position(nx, ny).cell_type == CELL["FISH"]]
+
+    if not fish_positions:
+        # No fish in the neighborhood, maintain current position
+        new_grid.set_position(x, y, old_grid.get_position(x, y))
+    else:
+        # Choose a random fish position
+        target_fish_x, target_fish_y = choice(fish_positions)
+
+        # Calculate direction towards the selected fish
+        dx = target_fish_x - x
+        dy = target_fish_y - y
+
+        # Set the new shark with the calculated direction
+        new_shark = Grid_cell()
+        new_shark.cell_type = CELL['SHARK']
+        new_shark.cell_dir = offset_to_dir(dx, dy)
+        new_grid.set_position(x, y, new_shark)
+
+
 
 
 def assign_directions(old_grid, new_grid): # alignment rule
     for y in range(GRID_Y):
         for x in range(GRID_X):
             if old_grid.get_position(x,y).cell_type == CELL["FISH"]:
-                assign_direction(old_grid, new_grid, x,y)
+                assign_direction_for_fish(old_grid, new_grid, x,y)
+            if old_grid.get_position(x,y).cell_type == CELL["SHARK"]:
+                assign_direction_for_sharks(old_grid, new_grid, x,y)
+                
 
 def move_fish(old_grid, new_grid): # finialize timestep
     for y in range(GRID_Y):
@@ -184,14 +214,52 @@ def move_fish(old_grid, new_grid): # finialize timestep
             old_local_cell = old_grid.get_position(x,y)
             if old_local_cell.cell_type != CELL["FISH"]:
                 continue
-
             (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
             new_moved_cell = new_grid.get_position(nx, ny)
             old_moved_cell = old_grid.get_position(nx, ny)
+
+            # If new cell is EMPTY continue with the rest of the code
             if new_moved_cell.cell_type != CELL["EMPTY"] or old_moved_cell.cell_type != CELL["EMPTY"]:
                 continue
+
             new_grid.set_position(x,y, Grid_cell())
             new_grid.set_position(nx, ny, new_local_cell)
+
+def move_sharks(old_grid, new_grid):
+    for y in range(GRID_Y):
+        for x in range(GRID_X):
+            old_local_cell = old_grid.get_position(x, y)
+            if old_local_cell.cell_type != CELL["SHARK"]:
+                continue
+            
+            # Check if any fish are in vision
+            if all(new_grid.get_position(nx, ny).cell_type != CELL["FISH"] for nx, ny in get_neighbourhood(x, y, SHARK_VISION)):
+                # Move to a random EMPTY neighbor
+                nx, ny = choice([(nx, ny) for nx, ny in get_neighbourhood(x, y) if new_grid.get_position(nx, ny).cell_type == CELL["EMPTY"]])
+                new_grid.set_position(x, y, Grid_cell())
+                new_grid.set_position(nx, ny, old_local_cell)
+            else:
+                new_local_cell = new_grid.get_position(x,y)
+                old_local_cell = old_grid.get_position(x,y)
+
+                # If old posistion is not a SHARK, skip cell
+                if old_local_cell.cell_type != CELL["SHARK"]:
+                    continue
+
+                # Get new postition to move to
+                (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
+                new_moved_cell = new_grid.get_position(nx, ny)
+                old_moved_cell = old_grid.get_position(nx, ny)
+
+                # Only step on fish or empty cells
+                neighbors = list(get_neighbourhood(x, y))
+                valid_neighbors = [(nx, ny) for nx, ny in neighbors if new_grid.get_position(nx, ny).cell_type == CELL["EMPTY"] or new_grid.get_position(nx, ny).cell_type == CELL["FISH"]]
+
+                if not valid_neighbors:
+                    pass
+                else:    
+                    new_grid.set_position(x,y, Grid_cell())
+                    new_grid.set_position(nx, ny, new_local_cell)
 
 
 def iterate_grid(grid, steps):
@@ -204,6 +272,7 @@ def iterate_grid(grid, steps):
         new_grid.clear()
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
+        move_sharks(grid, new_grid)
         visualize.visualize(new_grid)
         # print(new_grid)
         # print_hline(GRID_X * 2 + 2, True, i != steps - 1)
@@ -214,6 +283,7 @@ if __name__ == "__main__":
     grid = Grid()
 
     grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
+    grid.populate_sharks(SHARK_START_COUNT)
     visualize.init(GRID_X, GRID_Y, GRID_MODE)
-    grid = iterate_grid(grid, 60)
+    grid = iterate_grid(grid, TIME_STEPS)
     visualize.finish()

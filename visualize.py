@@ -1,38 +1,44 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as manimation
-from random import randrange
-from parameters import GRID_X, GRID_Y, GRID_MODE
 
-FFMpegWriter = manimation.writers['ffmpeg']
-metadata = dict(title='Movie Test', artist='Matplotlib',
-                comment='a red circle following a blue sine wave')
-writer = FFMpegWriter(fps=15, metadata=metadata)
+writer = None
+circle_grid, colormap = None, None
 
-fig = plt.figure(facecolor='black', frameon=False, figsize=((GRID_X + 0.5) / 5, GRID_Y / 5))
-fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
-ax = fig.add_subplot(111)
-ax.set_xlim(0, GRID_X + 0.5)
-ax.set_ylim(0, GRID_Y)
-ax.set_facecolor("black")
+cell_colors = ["", "black", "yellow", "red"]
 
-frames = 200
+def init(xsize, ysize, mode):
+    global writer, savefunc, circle_grid, colormap
+    FFMpegWriter = manimation.writers['ffmpeg']
+    metadata = dict(title='Movie Test', artist='Matplotlib',
+                    comment='a visualization')
+    writer = FFMpegWriter(fps=15, metadata=metadata)
 
-count = min(GRID_X, GRID_Y) - frames
+    fig = plt.figure(facecolor='black', frameon=False, figsize=((xsize + 0.5) / 5, ysize / 5))
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+    ax = fig.add_subplot(111)
+    ax.set_xlim(0, xsize + 0.5)
+    ax.set_ylim(0, ysize)
+    ax.set_facecolor("black")
 
-x, y = np.arange(0,GRID_X), np.arange(0,GRID_Y)
-xv, yv = np.meshgrid(x, y)
-xv = xv + (yv % 2) / 2 + 0.5
-yv = yv + 0.5
-colormap = ["black"] * (GRID_X * GRID_Y)
+    x, y = np.arange(0, xsize), np.arange(0, ysize)
+    xv, yv = np.meshgrid(x, y)
+    xv = xv + (yv % 2) / 2 + 0.5
+    yv = yv + 0.5
+    colormap = ["black"] * (xsize * ysize)
 
-red_circle = ax.scatter(xv, yv, s=40, marker='o', c=colormap)
+    circle_grid = ax.scatter(xv, yv, s=40, marker='o', c=colormap)
+    writer.setup(fig, "writer_test.mp4", 100)
 
-# Update the frames for the movie
-with writer.saving(fig, "writer_test.mp4", 100):
-    for i in range(frames):
+def visualize(grid):
+    i=0
+    for row in grid.grid:
+        for cell in row:
+            colormap[i] = cell_colors[cell.cell_type]        
+            i+=1
 
-        colormap[randrange(0, GRID_X * GRID_Y)] = "red"        
-        # red_circle.set_data(x, y)
-        red_circle.set_color(colormap)
-        writer.grab_frame()
+    circle_grid.set_color(colormap)
+    writer.grab_frame()
+
+def finish():
+    writer.finish()

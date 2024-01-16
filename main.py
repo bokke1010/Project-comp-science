@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from random import randrange, random
 from math import sin, cos, atan2, pi, floor, ceil
 import numpy as np
-
+import visualize
 
 CELL = {
     "EMPTY" : 1,
@@ -196,15 +196,17 @@ def move_fish(old_grid, new_grid): # finialize timestep
 
 def iterate_grid(grid, steps):
     new_grid = Grid()
-    print_hline(GRID_X * 2 + 2, False, True)
-    print(grid)
-    print_hline(GRID_X * 2 + 2, True, True)
+    # print_hline(GRID_X * 2 + 2, False, True)
+    visualize.visualize(grid)
+    # print(grid)
+    # print_hline(GRID_X * 2 + 2, True, True)
     for i in range(steps):
         new_grid.clear()
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
-        print(new_grid)
-        print_hline(GRID_X * 2 + 2, True, i != steps - 1)
+        visualize.visualize(new_grid)
+        # print(new_grid)
+        # print_hline(GRID_X * 2 + 2, True, i != steps - 1)
         grid, new_grid = new_grid, grid
     return grid
 
@@ -212,4 +214,6 @@ if __name__ == "__main__":
     grid = Grid()
 
     grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
-    grid = iterate_grid(grid, 5)
+    visualize.init(GRID_X, GRID_Y, GRID_MODE)
+    grid = iterate_grid(grid, 60)
+    visualize.finish()

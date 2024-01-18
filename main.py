@@ -9,8 +9,11 @@ import visualize
 CELL = {
     "EMPTY" : 1,
     "FISH"  : 2,
-    "SHARK" : 3
+    "SHARK" : 3,
+    "FOOD"  : 4
 }
+
+FISH_REPLACEABLE = [CELL["EMPTY"], CELL["FOOD"]]
 
 #REMEMBER: 0,0 is top left
 DIR_COUNT = 6
@@ -96,12 +99,15 @@ def get_neighbourhood(mx, my, r = 1, include_self = False):
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
     cell_dir: int = 0 # Unused by default
+    food_lifespan: int = 0
 
     def __repr__(self):
         if self.cell_type == CELL["EMPTY"]:
             return " "
         elif self.cell_type == CELL["SHARK"]:
             return "S"
+        elif self.cell_type == CELL["FOOD"]:
+            return "F"
         else:
             return dir_symbs[self.cell_dir]
     # def __str__(self):
@@ -143,6 +149,33 @@ class Grid():
             # shark_cell.cell_dir = randrange(0, 9)
             self.set_position(x, y, shark_cell)
 
+    def place_food(self, count):
+        for i in range(count):
+            x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            food_cell = Grid_cell()
+            food_cell.cell_type = CELL["FOOD"]
+            self.set_position(x, y, food_cell)
+
+    # def place_food(self, count, lifespan):
+    #     for i in range(count):
+    #         x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+    #         food_cell = Grid_cell()
+    #         food_cell.cell_type = CELL["FOOD"]
+    #         food_cell.food_lifespan = lifespan
+    #         self.set_position(x, y, food_cell)
+
+    # def regenerate_food(self):
+    #     for y in range(GRID_Y):
+    #         for x in range(GRID_X):
+    #             cell = self.grid[y][x]
+    #             if cell.cell_type == CELL["FOOD"] and cell.food_lifespan > 0:
+    #                 cell.food_lifespan -= 1
+    #                 if cell.food_lifespan == 0:
+    #                     # Food has reached the end of its lifespan, replace with an empty cell
+    #                     self.set_position(x, y, Grid_cell())
+
+
+
     def clear(self):
         for y in range(0, GRID_Y):
             for x in range(0, GRID_X):
@@ -153,7 +186,6 @@ class Grid():
 
 def assign_direction_for_fish(old_grid, new_grid, x, y): # single fish alignment
     sx, sy = 0, 0
-    found = 0
     for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
         other_pos = old_grid.get_position(nx, ny)
         # Assert fish present
@@ -165,7 +197,11 @@ def assign_direction_for_fish(old_grid, new_grid, x, y): # single fish alignment
         elif other_pos.cell_type == CELL["SHARK"]:
             sx += SHARK_FACTOR * (x - nx)
             sy += SHARK_FACTOR * (y - ny)
-
+        elif other_pos.cell_type == CELL["FOOD"]:
+            sx += FOOD_ATTRACTION * (nx - x)
+            sy += FOOD_ATTRACTION * (ny - y)
+        else:
+            continue
     if sx == 0 and sy == 0:
         new_grid.set_position(x,y, old_grid.get_position(x, y))
     else:
@@ -217,9 +253,7 @@ def move_fish(old_grid, new_grid): # finialize timestep
             (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
             new_moved_cell = new_grid.get_position(nx, ny)
             old_moved_cell = old_grid.get_position(nx, ny)
-
-            # If new cell is EMPTY continue with the rest of the code
-            if new_moved_cell.cell_type != CELL["EMPTY"] or old_moved_cell.cell_type != CELL["EMPTY"]:
+            if (new_moved_cell.cell_type not in FISH_REPLACEABLE) or (old_moved_cell.cell_type not in FISH_REPLACEABLE):
                 continue
 
             new_grid.set_position(x,y, Grid_cell())
@@ -265,6 +299,7 @@ def iterate_grid(grid, steps):
     # print_hline(GRID_X * 2 + 2, True, True)
     for i in range(steps):
         new_grid.clear()
+        new_grid.place_food(8)
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
         move_sharks(grid, new_grid)

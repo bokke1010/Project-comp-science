@@ -6,7 +6,7 @@ from parameters import FPS
 writer = None
 circle_grid, colormap = None, None
 
-cell_colors = ["", "black", "yellow", "red"]
+cell_colors = ["", "black", "yellow", "red", "green"]
 
 def init(xsize, ysize, mode):
     global writer, savefunc, circle_grid, colormap

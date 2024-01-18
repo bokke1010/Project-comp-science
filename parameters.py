@@ -22,7 +22,9 @@ FISH_VISION = 2
 
 # Fish influence factors
 SHARK_FACTOR = 5
+FOOD_ATTRACTION = 3
 
 # Shark settings
 SHARK_SPEED = 0.8
 SHARK_VISION = 3
+

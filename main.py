@@ -232,6 +232,10 @@ def move_sharks(old_grid, new_grid):
             if old_local_cell.cell_type != CELL["SHARK"]:
                 continue
             
+            if random() > SHARK_SPEED:
+                new_grid.set_position(x, y, old_local_cell)
+                continue
+
             # Check if any fish are in vision
             if all(new_grid.get_position(nx, ny).cell_type != CELL["FISH"] for nx, ny in get_neighbourhood(x, y, SHARK_VISION)):
                 # Move to a random EMPTY neighbor
@@ -240,24 +244,15 @@ def move_sharks(old_grid, new_grid):
                 new_grid.set_position(nx, ny, old_local_cell)
             else:
                 new_local_cell = new_grid.get_position(x,y)
-                old_local_cell = old_grid.get_position(x,y)
-
-                # If old posistion is not a SHARK, skip cell
-                if old_local_cell.cell_type != CELL["SHARK"]:
-                    continue
-
-                # Get new postition to move to
-                (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
-                new_moved_cell = new_grid.get_position(nx, ny)
-                old_moved_cell = old_grid.get_position(nx, ny)
 
                 # Only step on fish or empty cells
                 neighbors = list(get_neighbourhood(x, y))
                 valid_neighbors = [(nx, ny) for nx, ny in neighbors if new_grid.get_position(nx, ny).cell_type == CELL["EMPTY"] or new_grid.get_position(nx, ny).cell_type == CELL["FISH"]]
 
                 if not valid_neighbors:
-                    pass
-                else:    
+                    new_grid.set_position(x, y, old_local_cell)
+                else:
+                    nx, ny = choice(valid_neighbors)
                     new_grid.set_position(x,y, Grid_cell())
                     new_grid.set_position(nx, ny, new_local_cell)
 

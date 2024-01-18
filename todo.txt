@@ -1,0 +1,13 @@
+Velocity as chance to move?
+
+Consider:
+Stochastic effects (direction preference, shark slower than tuna)
+
+Obstacles
+Water velocity (preferred direction based on position on grid)
+
+Fish get assigned a different sets of parameters
+
+Vary parameters through time (vision at night / day)
+
+What parameters model different school types

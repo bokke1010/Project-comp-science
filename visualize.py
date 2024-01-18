@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as manimation
+from parameters import FPS
 
 writer = None
 circle_grid, colormap = None, None
@@ -12,7 +13,7 @@ def init(xsize, ysize, mode):
     FFMpegWriter = manimation.writers['ffmpeg']
     metadata = dict(title='Movie Test', artist='Matplotlib',
                     comment='a visualization')
-    writer = FFMpegWriter(fps=15, metadata=metadata)
+    writer = FFMpegWriter(fps=FPS, metadata=metadata)
 
     fig = plt.figure(facecolor='black', frameon=False, figsize=((xsize + 0.5) / 5, ysize / 5))
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)

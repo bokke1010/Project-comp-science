@@ -111,6 +111,16 @@ def pos_to_dir(source_x, source_y, target_x, target_y):
     elif GRID_MODE == MODE_8:
         pass 
 
+def calculate_distance(x1, y1, x2, y2):
+        m1 = y1 & 1
+        m2 = y2 & 1
+
+        x1 -= (y1 - m1) // 2
+        x2 -= (y2 - m2) // 2
+
+        return max(abs(x2 - x1), abs(y2 - y1), abs(x1 + y1 - x2 - y2))
+
+
 @dataclass
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
@@ -155,6 +165,8 @@ class Grid():
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
             for (x, y) in get_neighbourhood(cluster_x, cluster_y, radius, True):
                 if random() < chance:
+                    if self.get_position(x,y).cell_type not in FISH_REPLACEABLE:
+                        continue
                     fish_cell = Grid_cell()
                     fish_cell.cell_type = CELL["FISH"]
                     fish_cell.cell_dir = randrange(0,DIR_COUNT) # None is no optionn
@@ -272,12 +284,12 @@ def move_fish(old_grid, new_grid): # finialize timestep
                 else:
                     # Choose a target
                     targets = [(nx, ny) for nx, ny in get_neighbourhood(x, y, SHARK_VISION) if old_grid.get_position(nx, ny).cell_type == CELL["FISH"]]
-                    nx, ny = choice(targets)
+                    
+                    # Go to closest valid target
+                    (nx, ny) = min(targets, key=lambda coords : calculate_distance(x, y, *coords))
+                    (tx, ty) = min(valid_neighbors, key=lambda coords : calculate_distance(nx, ny, *coords))
+                    new_grid.set_position(tx, ty, old_local_cell)
 
-                    # Move shark towards target
-                    dir_to_target = pos_to_dir(x, y, nx, ny)
-                    nx, ny = dir_to_pos(x, y, dir_to_target, 1)
-                    new_grid.set_position(nx, ny, old_local_cell)
 
             elif old_local_cell.cell_type == CELL["FOOD"] and new_local_cell.cell_type == CELL["EMPTY"]:
                     new_grid.set_position(x,y, old_local_cell)
@@ -293,6 +305,7 @@ def iterate_grid(grid, steps):
     for i in range(steps):
         new_grid.clear()
         new_grid.place_food(1)
+        new_grid.populate_fish(1,0,1)
         assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
         visualize.visualize(new_grid)

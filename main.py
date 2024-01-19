@@ -4,13 +4,15 @@ from random import randrange, random, choice
 from math import sin, cos, atan2, pi, floor, ceil
 import numpy as np
 import visualize
+from PerlinNoise import generate_perlin_noise 
 
 
 CELL = {
-    "EMPTY" : 1,
-    "FISH"  : 2,
-    "SHARK" : 3,
-    "FOOD"  : 4
+    "EMPTY"    : 1,
+    "FISH"     : 2,
+    "SHARK"    : 3,
+    "FOOD"     : 4,
+    "OBSTACLE" : 5
 }
 
 FISH_REPLACEABLE = [CELL["EMPTY"], CELL["FOOD"]]
@@ -206,7 +208,21 @@ class Grid():
     #                 if cell.food_lifespan == 0:
     #                     # Food has reached the end of its lifespan, replace with an empty cell
     #                     self.set_position(x, y, Grid_cell())
+            
+    def place_obstacles(self, density_obstacle, threshold_obstacle):
 
+        width = len(self.grid[0])
+        height = len(self.grid)
+        scale = 50
+
+        perlin_noise_map = generate_perlin_noise(width, height, scale)
+
+        for y in range(height):
+            for x in range(width):
+                if perlin_noise_map[y, x] < threshold_obstacle and random() < density_obstacle:
+                    obstacle_cell = Grid_cell()
+                    obstacle_cell.cell_type = CELL["OBSTACLE"]
+                    self.set_position(x, y, obstacle_cell)
 
 
     def clear(self):
@@ -306,6 +322,8 @@ def iterate_grid(grid, steps):
 
 if __name__ == "__main__":
     grid = Grid()
+
+    grid.place_obstacles(DENSITY_OBSTACLE, THRESHOLD_OBSTACLE)
 
     grid.place_food(FOOD_START_COUNT)
     grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)

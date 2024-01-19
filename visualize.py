@@ -6,7 +6,7 @@ from parameters import VisualizationOptions
 writer = None
 circle_grid, colormap = None, None
 
-cell_colors = ["", VisualizationOptions.BG_COLOR, "yellow", "red", "white"]
+cell_colors = ["", VisualizationOptions.BG_COLOR, "yellow", "red", "white", "black"]
 
 def init(xsize, ysize, mode):
     global writer, savefunc, circle_grid, colormap

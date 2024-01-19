@@ -20,8 +20,8 @@ def generate_perlin_noise(width, height, scale):
 
     for y in range(height):
         for x in range(width):
-            x_cell = x // scale 
-            y_cell = y // scale 
+            x_cell = x // scale
+            y_cell = y // scale
 
             in_x_cell = x / scale - x_cell
             in_y_cell = y / scale - y_cell 
@@ -33,11 +33,10 @@ def generate_perlin_noise(width, height, scale):
             dot_bottom_right = np.dot(gradients[y_cell + 1, x_cell + 1], [in_x_cell - 1, in_y_cell - 1])
 
             # interpolating along the x axis
-            interpolate_x_top = smoothstep(in_x_cell)
-            interpolate_x_bottom = smoothstep(in_x_cell - 1)
+            interpolate_x = smoothstep(in_x_cell)
 
-            interpolated_top = lerp(dot_top_left, dot_top_right, interpolate_x_top)
-            interpolated_bottom = lerp(dot_bottom_left, dot_bottom_right, interpolate_x_top)
+            interpolated_top = lerp(dot_top_left, dot_top_right, interpolate_x)
+            interpolated_bottom = lerp(dot_bottom_left, dot_bottom_right, interpolate_x)
 
             # interpolating along y axis
             interpolate_y = smoothstep(in_y_cell)
@@ -55,7 +54,7 @@ width, height = 256, 256
 scale = 50
 perlin_noise = generate_perlin_noise(width, height, scale)
 
-plt.imshow(perlin_noise, cmap='viridis', interpolation='nearest')
+plt.imshow(perlin_noise, interpolation='nearest', cmap="gray")
 plt.colorbar()
 plt.show()
 

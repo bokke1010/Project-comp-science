@@ -1,7 +1,4 @@
-import math
-import random
 import numpy as np 
-import matplotlib.pyplot as plt
 
 def smoothstep(t):
    
@@ -50,13 +47,16 @@ def generate_perlin_noise(width, height, scale):
     return noise
 
 
-width, height = 256, 256
-scale = 100
-perlin_noise = generate_perlin_noise(width, height, scale)
+if __name__ == "__main__":
+    width, height = 256, 256
+    scale = 100
+    perlin_noise = generate_perlin_noise(width, height, scale)
 
-plt.imshow(perlin_noise, interpolation='nearest', cmap="gray")
-plt.colorbar()
-plt.show()
+    import matplotlib.pyplot as plt
+
+    plt.imshow(perlin_noise, interpolation='nearest', cmap="gray")
+    plt.colorbar()
+    plt.show()
 
 
 

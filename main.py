@@ -111,6 +111,16 @@ def pos_to_dir(source_x, source_y, target_x, target_y):
     elif GRID_MODE == MODE_8:
         pass 
 
+def calculate_distance(x1, y1, x2, y2):
+        m1 = y1 & 1
+        m2 = y2 & 1
+
+        x1 -= (y1 - m1) // 2
+        x2 -= (y2 - m2) // 2
+
+        return max(abs(x2 - x1), abs(y2 - y1), abs(x1 + y1 - x2 - y2))
+
+
 @dataclass
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
@@ -155,6 +165,8 @@ class Grid():
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
             for (x, y) in get_neighbourhood(cluster_x, cluster_y, radius, True):
                 if random() < chance:
+                    if self.get_position(x,y).cell_type not in FISH_REPLACEABLE:
+                        continue
                     fish_cell = Grid_cell()
                     fish_cell.cell_type = CELL["FISH"]
                     fish_cell.cell_dir = randrange(0,DIR_COUNT) # None is no optionn
@@ -202,41 +214,6 @@ class Grid():
             for x in range(0, GRID_X):
                 self.grid[y][x] = Grid_cell()
 
-# def sgn(n):
-#     return int(n > 0) - int(n < 0)
-
-def assign_direction_for_fish(old_grid, new_grid, x, y): # single fish alignment
-    sx, sy = 0, 0
-    for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
-        other_pos = old_grid.get_position(nx, ny)
-        # Assert fish present
-        if other_pos.cell_type == CELL["FISH"]:
-            other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
-            sx += other_dir[0]
-            sy += other_dir[1]
-        # If shark present, influence to other direction
-        elif other_pos.cell_type == CELL["SHARK"]:
-            sx += SHARK_FACTOR * (x - nx)
-            sy += SHARK_FACTOR * (y - ny)
-        elif other_pos.cell_type == CELL["FOOD"]:
-            sx += FOOD_ATTRACTION * (nx - x)
-            sy += FOOD_ATTRACTION * (ny - y)
-        else:
-            continue
-    if sx == 0 and sy == 0:
-        new_grid.set_position(x,y, old_grid.get_position(x, y))
-    else:
-        new_fish = Grid_cell()
-        new_fish.cell_type = CELL['FISH']
-        new_fish.cell_dir = offset_to_dir(sx, sy)
-        new_grid.set_position(x,y, new_fish)
-
-def assign_directions(old_grid, new_grid): # alignment rule
-    for y in range(GRID_Y):
-        for x in range(GRID_X):
-            if old_grid.get_position(x,y).cell_type == CELL["FISH"]:
-                assign_direction_for_fish(old_grid, new_grid, x,y)
-
 def move_fish(old_grid, new_grid): # finialize timestep
     for y in range(GRID_Y):
         for x in range(GRID_X):
@@ -244,14 +221,40 @@ def move_fish(old_grid, new_grid): # finialize timestep
             old_local_cell = old_grid.get_position(x,y)
 
             if old_local_cell.cell_type == CELL["FISH"]:
-                (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
-                new_moved_cell = new_grid.get_position(nx, ny)
-                old_moved_cell = old_grid.get_position(nx, ny)
-                if (new_moved_cell.cell_type not in FISH_REPLACEABLE) or (old_moved_cell.cell_type not in FISH_REPLACEABLE):
-                    continue
 
-                new_grid.set_position(x,y, Grid_cell())
-                new_grid.set_position(nx, ny, new_local_cell)
+                sx, sy = 0, 0 # field coordinates, not grid coordinates
+                rvec = FISH_RANDOMNESS * unit_vector(random() * 2 * pi)
+                sx += rvec[0]
+                sy += rvec[1]
+                for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
+                    other_pos = old_grid.get_position(nx, ny)
+                    # Assert fish present
+                    if other_pos.cell_type == CELL["FISH"]:
+                        other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
+                        sx += other_dir[0]
+                        sy += other_dir[1]
+                    # If shark present, influence to other direction
+                    elif other_pos.cell_type == CELL["SHARK"]:
+                        escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
+                        sx += SHARK_FACTOR * escape_vector[0]
+                        sy += SHARK_FACTOR * escape_vector[1]
+                    elif other_pos.cell_type == CELL["FOOD"]:
+                        food_vector = unit_vector(dir_to_angle[pos_to_dir(x, y, nx, ny)])
+                        sx += FOOD_ATTRACTION * food_vector[0]
+                        sy += FOOD_ATTRACTION * food_vector[1]
+                    else:
+                        continue
+                dir = old_local_cell.cell_dir
+                if sx != 0 or sy != 0:
+                    dir = offset_to_dir(sx, sy)
+                    old_local_cell.cell_dir = dir
+                (nx, ny) = dir_to_pos(x, y, dir, 1)
+
+                if (new_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE) \
+                    and (old_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE):
+                    new_grid.set_position(nx, ny, old_local_cell)
+                else:
+                    new_grid.set_position(x, y, old_local_cell)
 
             elif old_local_cell.cell_type == CELL["SHARK"]:
                 if random() > SHARK_SPEED:
@@ -265,19 +268,19 @@ def move_fish(old_grid, new_grid): # finialize timestep
                     continue
 
                 # Check if any fish are in vision
-                if all(old_grid.get_position(nx, ny).cell_type != CELL["FISH"] for nx, ny in get_neighbourhood(x, y, SHARK_VISION)):
+                if all(not old_grid.cmp_position(nx, ny, CELL["FISH"]) for nx, ny in get_neighbourhood(x, y, SHARK_VISION)):
                     # Move to a random neighbor cell
                     nx, ny = choice(valid_neighbors)
                     new_grid.set_position(nx, ny, old_local_cell)
                 else:
                     # Choose a target
-                    targets = [(nx, ny) for nx, ny in get_neighbourhood(x, y, SHARK_VISION) if old_grid.get_position(nx, ny).cell_type == CELL["FISH"]]
-                    nx, ny = choice(targets)
+                    targets = [(nx, ny) for nx, ny in get_neighbourhood(x, y, SHARK_VISION) if old_grid.cmp_position(nx, ny, CELL["FISH"])]
+                    
+                    # Go to closest valid target
+                    (nx, ny) = min(targets, key=lambda coords : calculate_distance(x, y, *coords))
+                    (tx, ty) = min(valid_neighbors, key=lambda coords : calculate_distance(nx, ny, *coords))
+                    new_grid.set_position(tx, ty, old_local_cell)
 
-                    # Move shark towards target
-                    dir_to_target = pos_to_dir(x, y, nx, ny)
-                    nx, ny = dir_to_pos(x, y, dir_to_target, 1)
-                    new_grid.set_position(nx, ny, old_local_cell)
 
             elif old_local_cell.cell_type == CELL["FOOD"] and new_local_cell.cell_type == CELL["EMPTY"]:
                     new_grid.set_position(x,y, old_local_cell)
@@ -293,7 +296,7 @@ def iterate_grid(grid, steps):
     for i in range(steps):
         new_grid.clear()
         new_grid.place_food(1)
-        assign_directions(grid, new_grid)
+        new_grid.populate_fish(1,0,1)
         move_fish(grid, new_grid)
         visualize.visualize(new_grid)
         # print(new_grid)

@@ -30,6 +30,7 @@ SHARK_START_COUNT = 7
 # Fish settings
 FISH_SPEED = 1
 FISH_VISION = 2
+FISH_RANDOMNESS = 0.3
 
 # Fish influence factors
 SHARK_FACTOR = 5

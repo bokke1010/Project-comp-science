@@ -52,7 +52,7 @@ def generate_perlin_noise(width, height, scale):
 
 
 width, height = 256, 256
-scale = 50
+scale = 100
 perlin_noise = generate_perlin_noise(width, height, scale)
 
 plt.imshow(perlin_noise, cmap='viridis', interpolation='nearest')

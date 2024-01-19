@@ -213,13 +213,21 @@ class Grid():
 
         width = len(self.grid[0])
         height = len(self.grid)
-        scale = 50
 
+        scale = 25 # lower scale is zoomed out
+        mask_scale = 8
+        line_thickness = 0.01 # lower is thinner lines
+        line_count = 3 # amount of lines
+        
+        values = [(i + 1) / (line_count + 1) for i in range(line_count)]
         perlin_noise_map = generate_perlin_noise(width, height, scale)
+
+        mask_noise_map = generate_perlin_noise(width, height, mask_scale)
 
         for y in range(height):
             for x in range(width):
-                if perlin_noise_map[y, x] < threshold_obstacle and random() < density_obstacle:
+
+                if any(v - line_thickness < perlin_noise_map[y, x] < v + line_thickness for v in values) and mask_noise_map[y, x] < density_obstacle:
                     obstacle_cell = Grid_cell()
                     obstacle_cell.cell_type = CELL["OBSTACLE"]
                     self.set_position(x, y, obstacle_cell)
@@ -258,6 +266,10 @@ def move_fish(old_grid, new_grid): # finialize timestep
                         food_vector = unit_vector(dir_to_angle[pos_to_dir(x, y, nx, ny)])
                         sx += FOOD_ATTRACTION * food_vector[0]
                         sy += FOOD_ATTRACTION * food_vector[1]
+                    elif other_pos.cell_type == CELL["OBSTACLE"]:
+                        escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
+                        sx += 1.2 * escape_vector[0]
+                        sy += 1.2 * escape_vector[1]
                     else:
                         continue
                 dir = old_local_cell.cell_dir
@@ -299,7 +311,9 @@ def move_fish(old_grid, new_grid): # finialize timestep
 
 
             elif old_local_cell.cell_type == CELL["FOOD"] and new_local_cell.cell_type == CELL["EMPTY"]:
-                    new_grid.set_position(x,y, old_local_cell)
+                new_grid.set_position(x,y, old_local_cell)
+            elif old_local_cell.cell_type == CELL["OBSTACLE"]:
+                new_grid.set_position(x,y,old_local_cell)
 
 
 

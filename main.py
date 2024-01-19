@@ -214,41 +214,6 @@ class Grid():
             for x in range(0, GRID_X):
                 self.grid[y][x] = Grid_cell()
 
-# def sgn(n):
-#     return int(n > 0) - int(n < 0)
-
-def assign_direction_for_fish(old_grid, new_grid, x, y): # single fish alignment
-    sx, sy = 0, 0
-    for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
-        other_pos = old_grid.get_position(nx, ny)
-        # Assert fish present
-        if other_pos.cell_type == CELL["FISH"]:
-            other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
-            sx += other_dir[0]
-            sy += other_dir[1]
-        # If shark present, influence to other direction
-        elif other_pos.cell_type == CELL["SHARK"]:
-            sx += SHARK_FACTOR * (x - nx)
-            sy += SHARK_FACTOR * (y - ny)
-        elif other_pos.cell_type == CELL["FOOD"]:
-            sx += FOOD_ATTRACTION * (nx - x)
-            sy += FOOD_ATTRACTION * (ny - y)
-        else:
-            continue
-    if sx == 0 and sy == 0:
-        new_grid.set_position(x,y, old_grid.get_position(x, y))
-    else:
-        new_fish = Grid_cell()
-        new_fish.cell_type = CELL['FISH']
-        new_fish.cell_dir = offset_to_dir(sx, sy)
-        new_grid.set_position(x,y, new_fish)
-
-def assign_directions(old_grid, new_grid): # alignment rule
-    for y in range(GRID_Y):
-        for x in range(GRID_X):
-            if old_grid.get_position(x,y).cell_type == CELL["FISH"]:
-                assign_direction_for_fish(old_grid, new_grid, x,y)
-
 def move_fish(old_grid, new_grid): # finialize timestep
     for y in range(GRID_Y):
         for x in range(GRID_X):
@@ -256,14 +221,40 @@ def move_fish(old_grid, new_grid): # finialize timestep
             old_local_cell = old_grid.get_position(x,y)
 
             if old_local_cell.cell_type == CELL["FISH"]:
-                (nx, ny) = dir_to_pos(x, y, new_local_cell.cell_dir, 1)
+
+                sx, sy = 0, 0
+                rvec = FISH_RANDOMNESS * unit_vector(random() * 2 * pi)
+                sx += rvec[0]
+                sy += rvec[1]
+                for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
+                    other_pos = old_grid.get_position(nx, ny)
+                    # Assert fish present
+                    if other_pos.cell_type == CELL["FISH"]:
+                        other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
+                        sx += other_dir[0]
+                        sy += other_dir[1]
+                    # If shark present, influence to other direction
+                    elif other_pos.cell_type == CELL["SHARK"]:
+                        sx += SHARK_FACTOR * (x - nx)
+                        sy += SHARK_FACTOR * (y - ny)
+                    elif other_pos.cell_type == CELL["FOOD"]:
+                        sx += FOOD_ATTRACTION * (nx - x)
+                        sy += FOOD_ATTRACTION * (ny - y)
+                    else:
+                        continue
+                dir = old_local_cell.cell_dir
+                if sx != 0 or sy != 0:
+                    dir = offset_to_dir(sx, sy)
+                    old_local_cell.cell_dir = dir
+                (nx, ny) = dir_to_pos(x, y, offset_to_dir(sx, sy), 1)
                 new_moved_cell = new_grid.get_position(nx, ny)
                 old_moved_cell = old_grid.get_position(nx, ny)
+
                 if (new_moved_cell.cell_type not in FISH_REPLACEABLE) or (old_moved_cell.cell_type not in FISH_REPLACEABLE):
+                    new_grid.set_position(x, y, old_local_cell)
                     continue
 
-                new_grid.set_position(x,y, Grid_cell())
-                new_grid.set_position(nx, ny, new_local_cell)
+                new_grid.set_position(nx, ny, old_local_cell)
 
             elif old_local_cell.cell_type == CELL["SHARK"]:
                 if random() > SHARK_SPEED:
@@ -306,7 +297,6 @@ def iterate_grid(grid, steps):
         new_grid.clear()
         new_grid.place_food(1)
         new_grid.populate_fish(1,0,1)
-        assign_directions(grid, new_grid)
         move_fish(grid, new_grid)
         visualize.visualize(new_grid)
         # print(new_grid)

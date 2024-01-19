@@ -1,9 +1,11 @@
 Velocity as chance to move?
 
 Consider:
-Stochastic effects (direction preference, shark slower than tuna)
+Sharks slower than fish - DONE
 
-Obstacles
+Stochastic effects (direction preference, shark slower than tuna) - DONE
+
+Obstacles - In progress
 Water velocity (preferred direction based on position on grid)
 
 Fish get assigned a different sets of parameters

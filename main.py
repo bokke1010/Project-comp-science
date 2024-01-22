@@ -204,7 +204,7 @@ class Grid():
         height = len(self.grid)
 
         scale = 25 # lower scale is zoomed out
-        mask_scale = 8
+        mask_scale = 60
         line_thickness = 0.01 # lower is thinner lines
         line_count = 3 # amount of lines
         
@@ -270,7 +270,7 @@ def move_fish(old_grid, new_grid, is_daytime): # finialize timestep
                 if (new_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE) \
                     and (old_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE):
                     new_grid.set_position(nx, ny, old_local_cell)
-                else:
+                elif (new_local_cell.cell_type in FISH_REPLACEABLE):
                     new_grid.set_position(x, y, old_local_cell)
 
             elif old_local_cell.cell_type == CELL["SHARK"]:
@@ -319,7 +319,8 @@ def iterate_grid(grid, steps):
     for i in range(steps):
         new_grid.clear()
         new_grid.place_food(1)
-        new_grid.populate_fish(1,0,1)
+        if random() < FISH_RANDOMNESS:
+            new_grid.populate_fish(1,0,1)
         move_fish(grid, new_grid, daytime)
         visualize.visualize(new_grid)
 

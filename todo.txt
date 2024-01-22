@@ -2,6 +2,7 @@ Velocity as chance to move?
 
 Todo list:
 Use fish schooling parameters, either surface sheet, dome or ball formation parameters
+Assume 3x length compared to width, so a circle with diameter BL has area (0.5 BL) ^2 * pi, 3.5 tuna areas per cell
 
 Sharks slower than fish - DONE
 

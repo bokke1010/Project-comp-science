@@ -163,13 +163,14 @@ class Grid():
     def populate_fish(self, count, radius, chance):
         for i in range(count):
             cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            cluster_dir = randrange(0,DIR_COUNT) # None is no option
             for (x, y) in get_neighbourhood(cluster_x, cluster_y, radius, True):
                 if random() < chance:
                     if self.get_position(x,y).cell_type not in FISH_REPLACEABLE:
                         continue
                     fish_cell = Grid_cell()
                     fish_cell.cell_type = CELL["FISH"]
-                    fish_cell.cell_dir = randrange(0,DIR_COUNT) # None is no optionn
+                    fish_cell.cell_dir = cluster_dir
                     self.set_position(x,y, fish_cell)
 
     def populate_sharks(self, count):

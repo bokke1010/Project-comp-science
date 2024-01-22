@@ -1,15 +1,18 @@
 Velocity as chance to move?
 
-Consider:
+Todo list:
+Use fish schooling parameters, either surface sheet, dome or ball formation parameters
+
 Sharks slower than fish - DONE
 
 Stochastic effects (direction preference, shark slower than tuna) - DONE
 
 Obstacles - DONE?
-Water velocity (preferred direction based on position on grid)
+
+Vary parameters through time (vision at night / day) - DONE (more possible)
 
 Fish get assigned a different sets of parameters
 
-Vary parameters through time (vision at night / day)
-
+Rejected ideas:
+Water velocity (preferred direction based on position on grid)
 What parameters model different school types

@@ -227,7 +227,7 @@ class Grid():
             for x in range(0, GRID_X):
                 self.grid[y][x] = Grid_cell()
 
-def move_fish(old_grid, new_grid): # finialize timestep
+def move_fish(old_grid, new_grid, is_daytime): # finialize timestep
     for y in range(GRID_Y):
         for x in range(GRID_X):
             new_local_cell = new_grid.get_position(x,y)
@@ -239,7 +239,7 @@ def move_fish(old_grid, new_grid): # finialize timestep
                 rvec = FISH_RANDOMNESS * unit_vector(random() * 2 * pi)
                 sx += rvec[0]
                 sy += rvec[1]
-                for (nx, ny) in get_neighbourhood(x, y, FISH_VISION, True):
+                for (nx, ny) in get_neighbourhood(x, y, FISH_VISION + is_daytime * DAYTIME_VISION_BONUS, True):
                     other_pos = old_grid.get_position(nx, ny)
                     # Assert fish present
                     if other_pos.cell_type == CELL["FISH"]:
@@ -257,8 +257,8 @@ def move_fish(old_grid, new_grid): # finialize timestep
                         sy += FOOD_ATTRACTION * food_vector[1]
                     elif other_pos.cell_type == CELL["OBSTACLE"]:
                         escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
-                        sx += 1.2 * escape_vector[0]
-                        sy += 1.2 * escape_vector[1]
+                        sx += OBSTACLE_FACTOR * escape_vector[0]
+                        sy += OBSTACLE_FACTOR * escape_vector[1]
                     else:
                         continue
                 dir = old_local_cell.cell_dir
@@ -278,7 +278,9 @@ def move_fish(old_grid, new_grid): # finialize timestep
                     new_grid.set_position(x, y, old_local_cell)
                     continue
 
-                valid_neighbors = [(nx, ny) for nx, ny in get_neighbourhood(x, y) if new_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE]
+                valid_neighbors = [(nx, ny) for nx, ny in get_neighbourhood(x, y) if
+                                    new_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE and
+                                    old_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE]
                 
                 if not valid_neighbors:
                     new_grid.set_position(x, y, old_local_cell)
@@ -312,14 +314,19 @@ def iterate_grid(grid, steps):
     visualize.visualize(grid)
     # print(grid)
     # print_hline(GRID_X * 2 + 2, True, True)
+    daytime = 1
+    time = 0
     for i in range(steps):
         new_grid.clear()
         new_grid.place_food(1)
         new_grid.populate_fish(1,0,1)
-        move_fish(grid, new_grid)
+        move_fish(grid, new_grid, daytime)
         visualize.visualize(new_grid)
-        # print(new_grid)
-        # print_hline(GRID_X * 2 + 2, True, i != steps - 1)
+
+        time += 1
+        if (daytime and time > DAYTIME_DURATION) or (not daytime and time > NIGHTTIME_DURATION):
+            time = 0
+            daytime = 1 - daytime
         grid, new_grid = new_grid, grid
     return grid
 

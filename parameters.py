@@ -1,8 +1,8 @@
 # Simulation options
-TIME_STEPS = 180
+TIME_STEPS = 600
 
-GRID_X = 120
-GRID_Y = 120
+GRID_X = 150
+GRID_Y = 150
 
 #Visualization options
 class VisualizationOptions:
@@ -25,7 +25,7 @@ FISH_START_CHANCE = 0.7
 
 FOOD_START_COUNT = 10
 
-SHARK_START_COUNT = 7
+SHARK_START_COUNT = 12
 
 # Fish settings
 FISH_SPEED = 1
@@ -35,6 +35,7 @@ FISH_RANDOMNESS = 0.3
 # Fish influence factors
 SHARK_FACTOR = 5
 FOOD_ATTRACTION = 3
+OBSTACLE_FACTOR = 1.2
 
 # Shark settings
 SHARK_SPEED = 0.8
@@ -45,4 +46,7 @@ SHARK_VISION = 4
 DENSITY_OBSTACLE = 0.4
 THRESHOLD_OBSTACLE = 0.3
 
-
+# Time settings
+DAYTIME_DURATION = 50
+NIGHTTIME_DURATION = 30
+DAYTIME_VISION_BONUS = 1

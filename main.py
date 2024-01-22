@@ -27,13 +27,14 @@ dir_symbs = ['→', '↘', '↙', '←', '↖', '↗']
 dir_to_angle = [0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3]
 
 def angle_to_dir(angle):
+    """Simple conversion from angle in radians to one of 6 directions."""
     part = 2 * pi / DIR_COUNT
     result = int(floor((angle + part/2) / part)) % DIR_COUNT
     # print(angle / pi, result)
     return result
 
-# Do not try to calculate the direction of a zero vector
 def offset_to_dir(x, y):
+    """Turn a nonzero vector into a direction, not grid coordinates"""
     return angle_to_dir(atan2(y, x))
 
 def print_hline(len, up = True, down = True):
@@ -66,7 +67,6 @@ def dir_to_pos(x, y, dir, dist):
         else: # Northeast, southeast
             nx = (dist + m) // 2
 
-        # ny = 1,2 is +1 | 0, 3 is 0 | 4, 5 is -1
         ny = dist * int(dir % 3 != 0) * (1 - 2 * (dir // 3))
         return np.array([x + nx, y + ny])
     elif GRID_MODE == MODE_8:
@@ -126,7 +126,7 @@ def calculate_distance(x1, y1, x2, y2):
 @dataclass
 class Grid_cell:
     cell_type: int = CELL["EMPTY"]
-    cell_dir: int = 0 # Unused by default
+    cell_dir: int = 0 # Unused by most cell types
     food_lifespan: int = 0
 
     def __repr__(self):
@@ -138,8 +138,6 @@ class Grid_cell:
             return "F"
         else:
             return dir_symbs[self.cell_dir]
-    # def __str__(self):
-    #     return "member of Test"
 
 
 class Grid():
@@ -179,7 +177,6 @@ class Grid():
             x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
             shark_cell = Grid_cell()
             shark_cell.cell_type = CELL["SHARK"]
-            # shark_cell.cell_dir = randrange(0, 9)
             self.set_position(x, y, shark_cell)
 
     def place_food(self, count):
@@ -190,14 +187,6 @@ class Grid():
             food_cell = Grid_cell()
             food_cell.cell_type = CELL["FOOD"]
             self.set_position(x, y, food_cell)
-
-    # def place_food(self, count, lifespan):
-    #     for i in range(count):
-    #         x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
-    #         food_cell = Grid_cell()
-    #         food_cell.cell_type = CELL["FOOD"]
-    #         food_cell.food_lifespan = lifespan
-    #         self.set_position(x, y, food_cell)
 
     # def regenerate_food(self):
     #     for y in range(GRID_Y):

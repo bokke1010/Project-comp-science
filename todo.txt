@@ -5,7 +5,7 @@ Sharks slower than fish - DONE
 
 Stochastic effects (direction preference, shark slower than tuna) - DONE
 
-Obstacles - In progress
+Obstacles - DONE?
 Water velocity (preferred direction based on position on grid)
 
 Fish get assigned a different sets of parameters

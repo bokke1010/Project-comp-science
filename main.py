@@ -340,7 +340,7 @@ def iterate_grid(grid, steps):
         food_remainder += FOOD_PER_STEP
         new_grid.place_food(floor(food_remainder))
         food_remainder -= floor(food_remainder)
-        
+
         if random() < FISH_REINFORCEMENT_CHANCE:
             new_grid.populate_fish(1,0,1)
         move_fish(grid, new_grid, daytime)
@@ -365,20 +365,24 @@ def prep_data(col_steps, col_range):
 if __name__ == "__main__":
     grid = Grid()
 
-    grid.place_obstacles(DENSITY_OBSTACLE, THRESHOLD_OBSTACLE)
+    foods = [0.5, 1, 2]
+    for food in foods:
+        grid.clear() 
+        FOOD_PER_STEP = food 
+        grid.place_food(FOOD_START_COUNT)
+        grid.place_obstacles(DENSITY_OBSTACLE, THRESHOLD_OBSTACLE)
 
-    grid.place_food(FOOD_START_COUNT)
-    grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
-    grid.populate_sharks(SHARK_START_COUNT)
-    # visualize.init(GRID_X, GRID_Y, GRID_MODE)
+        grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
+        grid.populate_sharks(SHARK_START_COUNT)
 
-    prep_data(TIME_STEPS, 2)
-    grid = iterate_grid(grid, TIME_STEPS)
+        prep_data(TIME_STEPS, 2)
+        
+        grid = iterate_grid(grid, TIME_STEPS)
 
-    for c in range(neighbourdata.shape[1] - 1):
-        neighbourdata[:,c+1] += neighbourdata[:,c]
-        plt.plot(neighbourdata[:,c], lw=0.5)
-    plt.ylim((0, np.amax(neighbourdata) + 2))
-    plt.show()
-    
-    # visualize.finish()
+        for c in range(neighbourdata.shape[1] - 1):
+            neighbourdata[:,c+1] += neighbourdata[:,c]
+            plt.plot(neighbourdata[:,c], lw=0.5)
+        plt.ylim((0, np.amax(neighbourdata) + 2))
+        plt.show()
+        
+        # visualize.finish()

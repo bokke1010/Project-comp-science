@@ -6,6 +6,7 @@ import numpy as np
 import visualize
 from PerlinNoise import generate_perlin_noise 
 
+from matplotlib import pyplot as plt
 
 CELL_EMPTY = 1
 CELL_FISH = 2
@@ -138,17 +139,15 @@ class Grid_cell:
             return dir_symbs[self.cell_dir]
 
 
+fishcount, collect_steps, collect_range, neighbourdata = None, None, None, None
+
 class Grid():
 
     # grid : [[Grid_cell]]
 
-    def __init__(self, collect_steps = 0, collect_range = 0):
+    def __init__(self):
         self.grid  = [[Grid_cell()] * GRID_X for _ in range(GRID_Y)]
-        if collect_steps > 0:
-            self.fishcount = [0] * collect_steps
-            ncount = len(list(get_neighbourhood(0,0,collect_range))) + 1
-            self.collect_range = collect_range
-            self.neighbourdata = [[0] * ncount for _ in range(collect_steps)]
+        
 
     def __repr__(self):
         return '│' + "│\n│".join((' ' * (i & 1)) + " ".join(map(repr, line)) + (' ' * (1 - (i & 1))) for (i, line) in enumerate(self.grid)) + '│'
@@ -226,15 +225,16 @@ class Grid():
                     self.set_position(x, y, obstacle_cell)
 
     def collect_data(self, t):
+        global fishcount, collect_range, neighbourdata
         for y in range(0, GRID_Y):
             for x in range(0, GRID_X):
-                if self.grid[y][x] == CELL_FISH:
-                    self.fishcount[t] += 1
+                if self.grid[y][x].cell_type == CELL_FISH:
+                    fishcount[t] += 1
                     nc = 0
-                    for (nx, ny) in get_neighbourhood(x,y, self.collect_range):
+                    for (nx, ny) in get_neighbourhood(x,y, collect_range):
                         if self.cmp_position(nx, ny, CELL_FISH):
                             nc += 1
-                    self.neighbourdata[t][nc] += 1
+                    neighbourdata[t][nc] += 1
 
 
     def clear(self):
@@ -328,16 +328,16 @@ def move_fish(old_grid, new_grid, is_daytime): # finialize timestep
 
 
 def iterate_grid(grid, steps):
-    new_grid = Grid(steps, 2)
+    new_grid = Grid()
     daytime = 1
     time = 0
     for i in range(steps):
         new_grid.clear()
-        if i % 10 == 0:
-            visualize.visualize(grid)
+        # if i % 10 == 0:
+        #     visualize.visualize(grid)
         grid.collect_data(i)
         new_grid.place_food(1)
-        if random() < FISH_RANDOMNESS:
+        if random() < FISH_REINFORCEMENT_CHANCE:
             new_grid.populate_fish(1,0,1)
         move_fish(grid, new_grid, daytime)
 
@@ -348,6 +348,16 @@ def iterate_grid(grid, steps):
         grid, new_grid = new_grid, grid
     return grid
 
+def prep_data(col_steps, col_range):
+    global collect_steps, collect_range, fishcount, neighbourdata
+    collect_steps = col_steps
+    collect_range = col_range
+    fishcount = [0] * collect_steps
+    collect_range = collect_range
+    ncount = len(list(get_neighbourhood(0,0,collect_range))) + 1
+    neighbourdata = np.zeros(shape=(collect_steps, ncount), dtype=int)
+
+
 if __name__ == "__main__":
     grid = Grid()
 
@@ -356,6 +366,15 @@ if __name__ == "__main__":
     grid.place_food(FOOD_START_COUNT)
     grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
     grid.populate_sharks(SHARK_START_COUNT)
-    visualize.init(GRID_X, GRID_Y, GRID_MODE)
+    # visualize.init(GRID_X, GRID_Y, GRID_MODE)
+
+    prep_data(TIME_STEPS, 2)
     grid = iterate_grid(grid, TIME_STEPS)
-    visualize.finish()
+
+    for c in range(neighbourdata.shape[1] - 1):
+        neighbourdata[:,c+1] += neighbourdata[:,c]
+        plt.plot(neighbourdata[:,c], lw=0.5)
+    plt.ylim((0, np.amax(neighbourdata) + 2))
+    plt.show()
+    
+    # visualize.finish()

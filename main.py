@@ -142,8 +142,13 @@ class Grid():
 
     # grid : [[Grid_cell]]
 
-    def __init__(self):
+    def __init__(self, collect_steps = 0, collect_range = 0):
         self.grid  = [[Grid_cell()] * GRID_X for _ in range(GRID_Y)]
+        if collect_steps > 0:
+            self.fishcount = [0] * collect_steps
+            ncount = len(get_neighbourhood(0,0,collect_range)) + 1
+            self.collect_range = collect_range
+            self.neighbourdata = [[0] * ncount for _ in range(collect_steps)]
 
     def __repr__(self):
         return '│' + "│\n│".join((' ' * (i & 1)) + " ".join(map(repr, line)) + (' ' * (1 - (i & 1))) for (i, line) in enumerate(self.grid)) + '│'
@@ -219,6 +224,17 @@ class Grid():
                     obstacle_cell = Grid_cell()
                     obstacle_cell.cell_type = CELL_OBSTACLE
                     self.set_position(x, y, obstacle_cell)
+
+    def collect_data(self, t):
+        for y in range(0, GRID_Y):
+            for x in range(0, GRID_X):
+                if self.grid[y][x] == CELL_FISH:
+                    self.fishcount[t] += 1
+                    nc = 0
+                    for (nx, ny) in get_neighbourhood(x,y, self.collect_range):
+                        if self.cmp_position(nx, ny, CELL_FISH):
+                            nc += 1
+                    self.neighbourdata[t][nc] += 1
 
 
     def clear(self):
@@ -312,13 +328,14 @@ def move_fish(old_grid, new_grid, is_daytime): # finialize timestep
 
 
 def iterate_grid(grid, steps):
-    new_grid = Grid()
+    new_grid = Grid(steps, 2)
     daytime = 1
     time = 0
     for i in range(steps):
-        if i % 10 == 0:
-            visualize.visualize(new_grid)
         new_grid.clear()
+        if i % 10 == 0:
+            visualize.visualize(grid)
+        grid.collect_data(i)
         new_grid.place_food(1)
         if random() < FISH_RANDOMNESS:
             new_grid.populate_fish(1,0,1)

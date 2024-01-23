@@ -331,12 +331,16 @@ def iterate_grid(grid, steps):
     new_grid = Grid()
     daytime = 1
     time = 0
+    food_remainder = 0
     for i in range(steps):
         new_grid.clear()
         # if i % 10 == 0:
         #     visualize.visualize(grid)
         grid.collect_data(i)
-        new_grid.place_food(1)
+        food_remainder += FOOD_PER_STEP
+        new_grid.place_food(floor(food_remainder))
+        food_remainder -= floor(food_remainder)
+        
         if random() < FISH_REINFORCEMENT_CHANCE:
             new_grid.populate_fish(1,0,1)
         move_fish(grid, new_grid, daytime)

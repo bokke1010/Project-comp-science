@@ -146,7 +146,7 @@ class Grid():
         self.grid  = [[Grid_cell()] * GRID_X for _ in range(GRID_Y)]
         if collect_steps > 0:
             self.fishcount = [0] * collect_steps
-            ncount = len(get_neighbourhood(0,0,collect_range)) + 1
+            ncount = len(list(get_neighbourhood(0,0,collect_range))) + 1
             self.collect_range = collect_range
             self.neighbourdata = [[0] * ncount for _ in range(collect_steps)]
 

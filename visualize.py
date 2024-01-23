@@ -33,7 +33,7 @@ def init(xsize, ysize, mode):
     yv = yv + 0.5
     colormap = [VisualizationOptions.BG_COLOR] * (xsize * ysize)
 
-    circle_grid = ax.scatter(xv, yv, s= (2 * VisualizationOptions.PIXELS_PER_ENTITY)**2, marker='o', c=colormap)
+    circle_grid = ax.scatter(xv, yv, s= (2 * VisualizationOptions.PIXELS_PER_ENTITY)**2, marker='o', c=colormap, edgecolors=None)
     writer.setup(fig, f"{VisualizationOptions.FILE_NAME}.mp4", VisualizationOptions.PIXELS_PER_INCH)
 
 def visualize(grid):

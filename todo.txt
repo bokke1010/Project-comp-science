@@ -17,3 +17,5 @@ Fish get assigned a different sets of parameters
 Rejected ideas:
 Water velocity (preferred direction based on position on grid)
 What parameters model different school types
+
+data:

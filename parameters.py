@@ -1,5 +1,5 @@
 # Simulation options
-TIME_STEPS = 2000
+TIME_STEPS = 100
 
 GRID_X = 150
 GRID_Y = 150

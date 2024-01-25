@@ -365,24 +365,39 @@ def prep_data(col_steps, col_range):
 if __name__ == "__main__":
     grid = Grid()
 
-    foods = [0.5, 1, 2]
-    for food in foods:
+    # foods = [0.5, 1, 2]
+    runs = 10
+    collect_range = 2
+    ncount = len(list(get_neighbourhood(0,0,collect_range))) + 1
+    collected_data = np.zeros(shape=(runs, ncount), dtype=int)
+    
+    FOOD_PER_STEP = 2
+    for i in range(runs):
+    # for food in foods:
+        # FOOD_PER_STEP = food
         grid.clear() 
-        FOOD_PER_STEP = food 
         grid.place_food(FOOD_START_COUNT)
         grid.place_obstacles(DENSITY_OBSTACLE, THRESHOLD_OBSTACLE)
 
         grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
         grid.populate_sharks(SHARK_START_COUNT)
 
-        prep_data(TIME_STEPS, 2)
+        prep_data(TIME_STEPS, collect_range)
         
         grid = iterate_grid(grid, TIME_STEPS)
 
-        for c in range(neighbourdata.shape[1] - 1):
-            neighbourdata[:,c+1] += neighbourdata[:,c]
-            plt.plot(neighbourdata[:,c], lw=0.5)
-        plt.ylim((0, np.amax(neighbourdata) + 2))
-        plt.show()
+        collected_data[i] = np.sum(neighbourdata, axis=0)
+        # for c in range(neighbourdata.shape[1] - 1):
+            # neighbourdata[:,c+1] += neighbourdata[:,c]
+            # plt.hist(neighbourdata[:,c], lw=0.5)
+        # plt.ylim((0, np.amax(neighbourdata) + 2))
+        # plt.show()
         
         # visualize.finish()
+    plt.bar(
+        np.arange(collected_data.shape[1]),
+        np.mean(collected_data, axis=0),
+        yerr=np.array([np.min(collected_data, axis=0), np.max(collected_data, axis=0)]),
+        capsize=5,
+        tick_label=list(map(str, np.arange(collected_data.shape[1]))))
+    plt.show()

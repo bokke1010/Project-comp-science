@@ -1,12 +1,9 @@
-from parameters import *
+# from parameters import *
 from dataclasses import dataclass
 from random import randrange, random, choice
 from math import sin, cos, atan2, pi, floor, ceil
 import numpy as np
-import visualize
 from PerlinNoise import generate_perlin_noise 
-
-from matplotlib import pyplot as plt
 
 CELL_EMPTY = 1
 CELL_FISH = 2
@@ -19,6 +16,7 @@ SHARK_REPLACEABLE = [CELL_EMPTY, CELL_FOOD, CELL_FISH]
 
 #REMEMBER: 0,0 is top left
 DIR_COUNT = 6
+SIZE_X, SIZE_Y = None, None
 
 # Direction symbols in order of ascending angle, including marker
 dir_symbs = ['→', '↘', '↙', '←', '↖', '↗']
@@ -53,64 +51,38 @@ def unit_vector(angle):
     return np.array([cos(angle), sin(angle)])
 
 def dir_to_pos(x, y, dir, dist):
-    if GRID_MODE == MODE_4:
-        pass
-    elif GRID_MODE == MODE_6:
-        assert 0 <= dir < 6
-        m = y & 1
-        nx = 0
-        if dir % 3 == 0: # East, West
-            nx = dist * (1-2 * (dir // 3))
-        elif dir & 1 == 0: # Northwest, southwest
-            nx = - (dist - m) // 2
-        else: # Northeast, southeast
-            nx = (dist + m) // 2
+    assert 0 <= dir < 6
+    m = y & 1
+    nx = 0
+    if dir % 3 == 0: # East, West
+        nx = dist * (1-2 * (dir // 3))
+    elif dir & 1 == 0: # Northwest, southwest
+        nx = - (dist - m) // 2
+    else: # Northeast, southeast
+        nx = (dist + m) // 2
 
-        ny = dist * int(dir % 3 != 0) * (1 - 2 * (dir // 3))
-        return np.array([x + nx, y + ny])
-    elif GRID_MODE == MODE_8:
-        pass
+    ny = dist * int(dir % 3 != 0) * (1 - 2 * (dir // 3))
+    return np.array([x + nx, y + ny])
 
 def get_neighbourhood(mx, my, r = 1, include_self = False):
-    if GRID_MODE == MODE_4:
-        for x in range(-r, r+1):
-            for y in range(-r + abs(x), r + 1 - abs(x)):
-                if x == 0 and y == 0 and not include_self:
-                    continue
-                yield np.array([mx + x, my + y])
-    elif GRID_MODE == MODE_6:
-        # Odd rows are shifted 1/2 to the right
-        # m is 1 if we are on an odd row
-        m = my & 1
-        for y in range(-r, r+1):
-            # X range goes from r+1 elements to 2r+1 elements
-            for x in range(-r + ((abs(y) + m) // 2), r + 1 - ((abs(y) + 1 - m) // 2)):
-                if x == 0 and y == 0 and not include_self:
-                    continue
-                yield np.array([mx + x, my + y])
-
-
-    elif GRID_MODE == MODE_8:
-        for x in range(-r, r+1):
-            for y in range(-r, r+1):
-                if x == 0 and y == 0 and not include_self:
-                    continue
-                yield np.array([mx + x, my + y])
+    # Odd rows are shifted 1/2 to the right
+    # m is 1 if we are on an odd row
+    m = my & 1
+    for y in range(-r, r+1):
+        # X range goes from r+1 elements to 2r+1 elements
+        for x in range(-r + ((abs(y) + m) // 2), r + 1 - ((abs(y) + 1 - m) // 2)):
+            if x == 0 and y == 0 and not include_self:
+                continue
+            yield np.array([mx + x, my + y])
 
 def pos_to_dir(source_x, source_y, target_x, target_y):
     dx = target_x - source_x
     dy = target_y - source_y
+    m_source = source_y & 1
+    m_target = target_y & 1
 
-    if GRID_MODE == MODE_4:
-        return offset_to_dir(dx, dy)
-    elif GRID_MODE == MODE_6:
-        m_source = source_y & 1
-        m_target = target_y & 1
-
-        dx -= (dy - m_target) // 2 - (dy - m_source) // 2
-        return offset_to_dir(dx, dy)
-    elif GRID_MODE == MODE_8:
-        pass 
+    dx -= (dy - m_target) // 2 - (dy - m_source) // 2
+    return offset_to_dir(dx, dy)
 
 def calculate_distance(x1, y1, x2, y2):
         m1 = y1 & 1
@@ -146,25 +118,25 @@ class Grid():
     # grid : [[Grid_cell]]
 
     def __init__(self):
-        self.grid  = [[Grid_cell()] * GRID_X for _ in range(GRID_Y)]
+        self.grid  = [[Grid_cell()] * SIZE_X for _ in range(SIZE_Y)]
         
 
     def __repr__(self):
         return '│' + "│\n│".join((' ' * (i & 1)) + " ".join(map(repr, line)) + (' ' * (1 - (i & 1))) for (i, line) in enumerate(self.grid)) + '│'
 
     def set_position(self, x, y, value):
-        self.grid[y%GRID_Y][x%GRID_X] = value
+        self.grid[y%SIZE_Y][x%SIZE_X] = value
         # Can be made more efficient by limiting to [-l, l] and letting python handle it
 
     def get_position(self, x,y) -> Grid_cell:
-        return self.grid[y%GRID_Y][x%GRID_X]
+        return self.grid[y%SIZE_Y][x%SIZE_X]
         
     def cmp_position(self, x, y, type):
         return self.get_position(x, y).cell_type == type
 
-    def populate_fish(self, count, radius, chance):
+    def populate_fish(self, count = 2, radius = 8, chance = 0.3):
         for i in range(count):
-            cluster_x, cluster_y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            cluster_x, cluster_y = randrange(0, SIZE_X), randrange(0, SIZE_Y)
             cluster_dir = randrange(0,DIR_COUNT) # None is no option
             for (x, y) in get_neighbourhood(cluster_x, cluster_y, radius, True):
                 if random() < chance:
@@ -177,14 +149,14 @@ class Grid():
 
     def populate_sharks(self, count):
         for i in range(count):
-            x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            x, y = randrange(0, SIZE_X), randrange(0, SIZE_Y)
             shark_cell = Grid_cell()
             shark_cell.cell_type = CELL_SHARK
             self.set_position(x, y, shark_cell)
 
     def place_food(self, count):
         for i in range(count):
-            x, y = randrange(0, GRID_X), randrange(0, GRID_Y)
+            x, y = randrange(0, SIZE_X), randrange(0, SIZE_Y)
             if self.get_position(x,y).cell_type != CELL_EMPTY:
                 continue
             food_cell = Grid_cell()
@@ -192,8 +164,8 @@ class Grid():
             self.set_position(x, y, food_cell)
 
     # def regenerate_food(self):
-    #     for y in range(GRID_Y):
-    #         for x in range(GRID_X):
+    #     for y in range(SIZE_Y):
+    #         for x in range(SIZE_X):
     #             cell = self.grid[y][x]
     #             if cell.cell_type == CELL_FOOD and cell.food_lifespan > 0:
     #                 cell.food_lifespan -= 1
@@ -201,16 +173,17 @@ class Grid():
     #                     # Food has reached the end of its lifespan, replace with an empty cell
     #                     self.set_position(x, y, Grid_cell())
             
-    def place_obstacles(self, density_obstacle, threshold_obstacle):
+    def place_obstacles(self,
+            scale = 25, # scale of obstacle walls (lower is larger)
+            mask_scale = 60, # scale of larger structures
+            line_thickness = 0.01, # lower is thinner lines
+            line_count = 3, # amount of lines in the gradient
+            density_obstacle = 0.3
+        ):
 
         width = len(self.grid[0])
         height = len(self.grid)
 
-        scale = 25 # lower scale is zoomed out
-        mask_scale = 60
-        line_thickness = 0.01 # lower is thinner lines
-        line_count = 3 # amount of lines
-        
         values = [(i + 1) / (line_count + 1) for i in range(line_count)]
         perlin_noise_map = generate_perlin_noise(width, height, scale)
 
@@ -226,8 +199,8 @@ class Grid():
 
     def collect_data(self, t):
         global fishcount, collect_range, neighbourdata
-        for y in range(0, GRID_Y):
-            for x in range(0, GRID_X):
+        for y in range(0, SIZE_Y):
+            for x in range(0, SIZE_X):
                 if self.grid[y][x].cell_type == CELL_FISH:
                     fishcount[t] += 1
                     nc = 0
@@ -238,119 +211,171 @@ class Grid():
 
 
     def clear(self):
-        for y in range(0, GRID_Y):
-            for x in range(0, GRID_X):
+        for y in range(0, SIZE_Y):
+            for x in range(0, SIZE_X):
                 self.grid[y][x] = Grid_cell()
 
-def move_fish(old_grid, new_grid, is_daytime): # finialize timestep
-    for y in range(GRID_Y):
-        for x in range(GRID_X):
-            new_local_cell = new_grid.get_position(x,y)
-            old_local_cell = old_grid.get_position(x,y)
+class Simulation:
+    def __init__(self, fish_vision, shark_vision, fish_randomness, cohesion_strength, shark_factor, food_attraction, obstacle_factor, shark_speed, food_per_step, fish_reinforcement_chance, daytime_duration, nighttime_duration, daytime_bonus, collect_data):
+        self.fish_vision = fish_vision
+        self.shark_vision = shark_vision
+        self.fish_randomness = fish_randomness
+        self.cohesion_strength = cohesion_strength
+        self.shark_factor = shark_factor
+        self.food_attraction = food_attraction
+        self.obstacle_factor = obstacle_factor
+        self.shark_speed = shark_speed
+        self.food_per_step = food_per_step
+        self.fish_reinforcement_chance = fish_reinforcement_chance
+        self.daytime_duration = daytime_duration
+        self.nighttime_duration = nighttime_duration
+        self.daytime_bonus = daytime_bonus
 
-            if old_local_cell.cell_type == CELL_FISH:
 
-                sx, sy = 0, 0 # field coordinates, not grid coordinates
-                rvec = FISH_RANDOMNESS * unit_vector(random() * 2 * pi)
-                sx += rvec[0]
-                sy += rvec[1]
-                for (nx, ny) in get_neighbourhood(x, y, FISH_VISION + is_daytime * DAYTIME_VISION_BONUS, True):
-                    other_pos = old_grid.get_position(nx, ny)
-                    # Assert fish present
-                    if other_pos.cell_type == CELL_FISH:
-                        other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
-                        sx += other_dir[0]
-                        sy += other_dir[1]
-                        if USE_COHESION and calculate_distance(x, y, nx, ny) > 1:
-                            cohesion_vector = unit_vector(dir_to_angle[pos_to_dir(x, y, nx, ny)])
-                            sx += COHESION_STRENGTH * cohesion_vector[0]
-                            sy += COHESION_STRENGTH * cohesion_vector[1]
-                    # If shark present, influence to other direction
-                    elif other_pos.cell_type == CELL_SHARK:
-                        escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
-                        sx += SHARK_FACTOR * escape_vector[0]
-                        sy += SHARK_FACTOR * escape_vector[1]
-                    elif other_pos.cell_type == CELL_FOOD:
-                        food_vector = unit_vector(dir_to_angle[pos_to_dir(x, y, nx, ny)])
-                        sx += FOOD_ATTRACTION * food_vector[0]
-                        sy += FOOD_ATTRACTION * food_vector[1]
-                    elif other_pos.cell_type == CELL_OBSTACLE:
-                        escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
-                        sx += OBSTACLE_FACTOR * escape_vector[0]
-                        sy += OBSTACLE_FACTOR * escape_vector[1]
-                    else:
+
+        self.collect_data = collect_data
+
+
+    def move_fish(self, old_grid, new_grid, daytime): # finialize timestep
+        for y in range(SIZE_Y):
+            for x in range(SIZE_X):
+                new_local_cell = new_grid.get_position(x,y)
+                old_local_cell = old_grid.get_position(x,y)
+
+                if old_local_cell.cell_type == CELL_FISH:
+
+                    sx, sy = 0, 0 # field coordinates, not grid coordinates
+                    rvec = self.fish_randomness * unit_vector(random() * 2 * pi)
+                    sx += rvec[0]
+                    sy += rvec[1]
+                    for (nx, ny) in get_neighbourhood(x, y, self.fish_vision + daytime, True):
+                        other_pos = old_grid.get_position(nx, ny)
+                        # Assert fish present
+                        if other_pos.cell_type == CELL_FISH:
+                            other_dir = unit_vector(dir_to_angle[other_pos.cell_dir])
+                            sx += other_dir[0]
+                            sy += other_dir[1]
+                            if self.cohesion_strength > 0 and calculate_distance(x, y, nx, ny) > 1:
+                                cohesion_vector = unit_vector(dir_to_angle[pos_to_dir(x, y, nx, ny)])
+                                sx += self.cohesion_strength * cohesion_vector[0]
+                                sy += self.cohesion_strength * cohesion_vector[1]
+                        # If shark present, influence to other direction
+                        elif other_pos.cell_type == CELL_SHARK:
+                            escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
+                            sx += self.shark_factor * escape_vector[0]
+                            sy += self.shark_factor * escape_vector[1]
+                        elif other_pos.cell_type == CELL_FOOD:
+                            food_vector = unit_vector(dir_to_angle[pos_to_dir(x, y, nx, ny)])
+                            sx += self.food_attraction * food_vector[0]
+                            sy += self.food_attraction * food_vector[1]
+                        elif other_pos.cell_type == CELL_OBSTACLE:
+                            escape_vector = unit_vector(dir_to_angle[pos_to_dir(nx, ny, x, y)])
+                            sx += self.obstacle_factor * escape_vector[0]
+                            sy += self.obstacle_factor * escape_vector[1]
+                        else:
+                            continue
+                    dir = old_local_cell.cell_dir
+                    if sx != 0 or sy != 0:
+                        dir = offset_to_dir(sx, sy)
+                        old_local_cell.cell_dir = dir
+                    (nx, ny) = dir_to_pos(x, y, dir, 1)
+
+                    if (new_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE) \
+                        and (old_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE):
+                        new_grid.set_position(nx, ny, old_local_cell)
+                    elif (new_local_cell.cell_type in FISH_REPLACEABLE):
+                        new_grid.set_position(x, y, old_local_cell)
+
+                elif old_local_cell.cell_type == CELL_SHARK:
+                    if random() > self.shark_speed:
+                        new_grid.set_position(x, y, old_local_cell)
                         continue
-                dir = old_local_cell.cell_dir
-                if sx != 0 or sy != 0:
-                    dir = offset_to_dir(sx, sy)
-                    old_local_cell.cell_dir = dir
-                (nx, ny) = dir_to_pos(x, y, dir, 1)
 
-                if (new_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE) \
-                    and (old_grid.get_position(nx, ny).cell_type in FISH_REPLACEABLE):
-                    new_grid.set_position(nx, ny, old_local_cell)
-                elif (new_local_cell.cell_type in FISH_REPLACEABLE):
-                    new_grid.set_position(x, y, old_local_cell)
-
-            elif old_local_cell.cell_type == CELL_SHARK:
-                if random() > SHARK_SPEED:
-                    new_grid.set_position(x, y, old_local_cell)
-                    continue
-
-                valid_neighbors = [(nx, ny) for nx, ny in get_neighbourhood(x, y) if
-                                    new_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE and
-                                    old_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE]
-                
-                if not valid_neighbors:
-                    new_grid.set_position(x, y, old_local_cell)
-                    continue
-
-                # Check if any fish are in vision
-                if all(not old_grid.cmp_position(nx, ny, CELL_FISH) for nx, ny in get_neighbourhood(x, y, SHARK_VISION)):
-                    # Move to a random neighbor cell
-                    nx, ny = choice(valid_neighbors)
-                    new_grid.set_position(nx, ny, old_local_cell)
-                else:
-                    # Choose a target
-                    targets = [(nx, ny) for nx, ny in get_neighbourhood(x, y, SHARK_VISION) if old_grid.cmp_position(nx, ny, CELL_FISH)]
+                    valid_neighbors = [(nx, ny) for nx, ny in get_neighbourhood(x, y) if
+                                        new_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE and
+                                        old_grid.get_position(nx, ny).cell_type in SHARK_REPLACEABLE]
                     
-                    # Go to closest valid target
-                    (nx, ny) = min(targets, key=lambda coords : calculate_distance(x, y, *coords))
-                    (tx, ty) = min(valid_neighbors, key=lambda coords : calculate_distance(nx, ny, *coords))
-                    new_grid.set_position(tx, ty, old_local_cell)
+                    if not valid_neighbors:
+                        new_grid.set_position(x, y, old_local_cell)
+                        continue
+
+                    # Check if any fish are in vision
+                    if all(not old_grid.cmp_position(nx, ny, CELL_FISH) for nx, ny in get_neighbourhood(x, y, self.shark_vision)):
+                        # Move to a random neighbor cell
+                        nx, ny = choice(valid_neighbors)
+                        new_grid.set_position(nx, ny, old_local_cell)
+                    else:
+                        # Choose a target
+                        targets = [(nx, ny) for nx, ny in get_neighbourhood(x, y, self.shark_vision) if old_grid.cmp_position(nx, ny, CELL_FISH)]
+                        
+                        # Go to closest valid target
+                        (nx, ny) = min(targets, key=lambda coords : calculate_distance(x, y, *coords))
+                        (tx, ty) = min(valid_neighbors, key=lambda coords : calculate_distance(nx, ny, *coords))
+                        new_grid.set_position(tx, ty, old_local_cell)
 
 
-            elif old_local_cell.cell_type == CELL_FOOD and new_local_cell.cell_type == CELL_EMPTY:
-                new_grid.set_position(x,y, old_local_cell)
-            elif old_local_cell.cell_type == CELL_OBSTACLE:
-                new_grid.set_position(x,y,old_local_cell)
+                elif old_local_cell.cell_type == CELL_FOOD and new_local_cell.cell_type == CELL_EMPTY:
+                    new_grid.set_position(x,y, old_local_cell)
+                elif old_local_cell.cell_type == CELL_OBSTACLE:
+                    new_grid.set_position(x,y,old_local_cell)
 
 
 
-def iterate_grid(grid, steps):
-    new_grid = Grid()
-    daytime = 1
-    time = 0
-    food_remainder = 0
-    for i in range(steps):
-        new_grid.clear()
-        # if i % 10 == 0:
-        #     visualize.visualize(grid)
-        grid.collect_data(i)
-        food_remainder += FOOD_PER_STEP
-        new_grid.place_food(floor(food_remainder))
-        food_remainder -= floor(food_remainder)
+    def iterate_grid(self, grid, steps, actions = None, intervals = 1):
+        """parameters for functions passed into actions is (grid, i)"""
+        new_grid = Grid()
+        daytime = 1
+        time = 0
+        food_remainder = 0
+        for i in range(steps):
+            # Run any additional tasks
+            for action, interval in zip(actions, intervals):
+                if action and i % interval == 0:
+                    action(grid, i)
 
-        if random() < FISH_REINFORCEMENT_CHANCE:
-            new_grid.populate_fish(1,0,1)
-        move_fish(grid, new_grid, daytime)
+            # Add food and fish
+            food_remainder += self.food_per_step
+            new_grid.place_food(floor(food_remainder))
+            food_remainder -= floor(food_remainder)
 
-        time += 1
-        if (daytime and time > DAYTIME_DURATION) or (not daytime and time > NIGHTTIME_DURATION):
-            time = 0
-            daytime = 1 - daytime
-        grid, new_grid = new_grid, grid
-    return grid
+            if random() < self.fish_reinforcement_chance:
+                new_grid.populate_fish(1,0,1)
+
+            # Update simulation
+            self.move_fish(grid, new_grid, daytime)
+
+            # Manage day/night
+            time += 1
+            if (daytime and time > self.daytime_duration) or (not daytime and time > self.nighttime_duration):
+                time = 0
+                daytime = 1 - daytime
+
+            # Prepare grid for next time step
+            grid, new_grid = new_grid, grid
+            new_grid.clear()
+        return grid
+
+    def simulate(self, steps, actions = None, intervals = 1, obstacle_params, fish_params, shark_count):
+
+# fish params (+ defaults)
+# count = 2
+# radius = 8
+# chance = 0.3
+# obstacle params (+ defaults)
+# scale = 25, # scale of obstacle walls (lower is larger)
+# mask_scale = 60, # scale of larger structures
+# line_thickness = 0.01, # lower is thinner lines
+# line_count = 3, # amount of lines in the gradient
+# density_obstacle # mask cutoff
+
+        grid = Grid()
+
+        grid.place_food(self.food_start_count)
+        grid.place_obstacles(*obstacle_params)
+
+        grid.populate_fish(*fish_params)
+        grid.populate_sharks(shark_count)
+        self.iterate_grid(grid, steps, actions, intervals)
 
 def prep_data(col_steps, col_range):
     global collect_steps, collect_range, fishcount, neighbourdata
@@ -361,28 +386,3 @@ def prep_data(col_steps, col_range):
     ncount = len(list(get_neighbourhood(0,0,collect_range))) + 1
     neighbourdata = np.zeros(shape=(collect_steps, ncount), dtype=int)
 
-
-if __name__ == "__main__":
-    grid = Grid()
-
-    foods = [0.5, 1, 2]
-    for food in foods:
-        grid.clear() 
-        FOOD_PER_STEP = food 
-        grid.place_food(FOOD_START_COUNT)
-        grid.place_obstacles(DENSITY_OBSTACLE, THRESHOLD_OBSTACLE)
-
-        grid.populate_fish(FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE)
-        grid.populate_sharks(SHARK_START_COUNT)
-
-        prep_data(TIME_STEPS, 2)
-        
-        grid = iterate_grid(grid, TIME_STEPS)
-
-        for c in range(neighbourdata.shape[1] - 1):
-            neighbourdata[:,c+1] += neighbourdata[:,c]
-            plt.plot(neighbourdata[:,c], lw=0.5)
-        plt.ylim((0, np.amax(neighbourdata) + 2))
-        plt.show()
-        
-        # visualize.finish()

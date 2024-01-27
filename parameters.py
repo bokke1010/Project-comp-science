@@ -14,10 +14,6 @@ class VisualizationOptions:
     FILE_NAME = "video"
     BG_COLOR = "darkblue"
 
-# Only mode 6 is supported
-MODE_4, MODE_6, MODE_8 = 0,1,2
-GRID_MODE = MODE_6
-
 # Initialization settings
 FISH_START_RADIUS = 8
 FISH_START_COUNT = 2
@@ -38,7 +34,6 @@ FISH_RANDOMNESS = 0.3
 SHARK_FACTOR = 5
 FOOD_ATTRACTION = 3
 OBSTACLE_FACTOR = 1.2
-USE_COHESION = True
 COHESION_STRENGTH = 0.6
 
 # Shark settings

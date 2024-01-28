@@ -201,6 +201,7 @@ class Grid():
 
 class Simulation:
     def __init__(self, fish_vision, shark_vision, fish_randomness, cohesion_strength, shark_factor, food_attraction, obstacle_factor, shark_speed, food_per_step, fish_reinforcement_chance, daytime_duration, nighttime_duration, daytime_bonus):
+        """Create a simulation environment with all available parameters"""
         self.fish_vision = fish_vision
         self.shark_vision = shark_vision
         self.fish_randomness = fish_randomness
@@ -217,6 +218,7 @@ class Simulation:
 
 
     def move_fish(self, old_grid, new_grid, daytime): # finialize timestep
+        """ Compute a new grid to run a single timestap."""
         for y in range(SIZE_Y):
             for x in range(SIZE_X):
                 new_local_cell = new_grid.get_position(x,y)
@@ -303,7 +305,9 @@ class Simulation:
     # Perhaps some of the walls of arguments coming up should be delivered in seperate functions?
 
     def iterate_grid(self, grid, steps, actions = [], intervals = []):
-        """parameters for functions passed into actions is (grid, i)"""
+        """ Iterate a preconfigured grid. \n
+            You can pass functions to be executed periodically, parameters for functions passed into actions is (grid, i)
+        """
         new_grid = Grid()
         daytime = 1
         time = 0
@@ -337,7 +341,8 @@ class Simulation:
         return grid
 
     def simulate(self, steps, actions = None, intervals = 1, food_start_count = 0, fish_params = [], obstacle_params = [], shark_count = 12):
-        """ Initial fish school parameters \n
+        """ Run a simulation. Array parameter explanation: \n
+            Initial fish school parameters \n
             count = 2, radius = 8, chance = 0.3 \n
             Obstacle generation parameters \n
             scale = 25, (scale of obstacle walls, lower is larger) \n
@@ -350,19 +355,20 @@ class Simulation:
 
         grid.place_food(food_start_count)
         grid.place_obstacles(*obstacle_params)
-
         grid.populate_fish(*fish_params)
         grid.populate_sharks(shark_count)
+
         self.iterate_grid(grid, steps, actions, intervals)
 
 def collect_data(collect_range, array):
-        def inner_collect(g, t):
-            for y in range(0, SIZE_Y):
-                for x in range(0, SIZE_X):
-                    if g.grid[y][x].cell_type == CELL_FISH:
-                        nc = 0
-                        for (nx, ny) in get_neighbourhood(x,y, collect_range):
-                            if g.cmp_position(nx, ny, CELL_FISH):
-                                nc += 1
-                        array[t][nc] += 1
-        return inner_collect
+    """Fills a numpy array such that a[t][n] contains the number of fish with n neighbours at sample t"""
+    def inner_collect(g, t):
+        for y in range(0, SIZE_Y):
+            for x in range(0, SIZE_X):
+                if g.grid[y][x].cell_type == CELL_FISH:
+                    nc = 0
+                    for (nx, ny) in get_neighbourhood(x,y, collect_range):
+                        if g.cmp_position(nx, ny, CELL_FISH):
+                            nc += 1
+                    array[t][nc] += 1
+    return inner_collect

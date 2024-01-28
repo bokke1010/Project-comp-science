@@ -31,7 +31,6 @@ sim = main.Simulation( # Use default parameters
     daytime_bonus=DAYTIME_VISION_BONUS
 )
 
-FOOD_PER_STEP = 2
 for i in range(runs):
     neighbourdata.fill(0)
     sim.simulate(collect_steps * collect_interval, [main.collect_data(collect_range, neighbourdata)], [collect_interval], FOOD_START_COUNT, [FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE], [], SHARK_START_COUNT)

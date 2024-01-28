@@ -2,7 +2,6 @@ import main
 import numpy as np
 from matplotlib import pyplot as plt
 from parameters import *
-import visualize
 
 
 collect_steps = 120
@@ -31,7 +30,8 @@ sim = main.Simulation( # Use default parameters
     daytime_bonus=DAYTIME_VISION_BONUS
 )
 
-visualize.init(GRID_X, GRID_Y)
-sim.simulate(collect_steps * collect_interval, [visualize.visualize], [collect_interval], FOOD_START_COUNT, [FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE], [], SHARK_START_COUNT)
+sim.simulate(collect_steps * collect_interval, [main.collect_data(collect_range, neighbourdata)], [collect_interval], FOOD_START_COUNT, [FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE], [], SHARK_START_COUNT)
 
-visualize.finish()
+plt.plot(neighbourdata)
+plt.show()
+#TODO: do something with neighbourdata

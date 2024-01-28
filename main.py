@@ -110,9 +110,6 @@ class Grid_cell:
         else:
             return dir_symbs[self.cell_dir]
 
-
-fishcount, collect_steps, collect_range, neighbourdata = None, None, None, None
-
 class Grid():
 
     # grid : [[Grid_cell]]
@@ -197,26 +194,13 @@ class Grid():
                     obstacle_cell.cell_type = CELL_OBSTACLE
                     self.set_position(x, y, obstacle_cell)
 
-    def collect_data(self, t):
-        global fishcount, collect_range, neighbourdata
-        for y in range(0, SIZE_Y):
-            for x in range(0, SIZE_X):
-                if self.grid[y][x].cell_type == CELL_FISH:
-                    fishcount[t] += 1
-                    nc = 0
-                    for (nx, ny) in get_neighbourhood(x,y, collect_range):
-                        if self.cmp_position(nx, ny, CELL_FISH):
-                            nc += 1
-                    neighbourdata[t][nc] += 1
-
-
     def clear(self):
         for y in range(0, SIZE_Y):
             for x in range(0, SIZE_X):
                 self.grid[y][x] = Grid_cell()
 
 class Simulation:
-    def __init__(self, fish_vision, shark_vision, fish_randomness, cohesion_strength, shark_factor, food_attraction, obstacle_factor, shark_speed, food_per_step, fish_reinforcement_chance, daytime_duration, nighttime_duration, daytime_bonus, collect_data):
+    def __init__(self, fish_vision, shark_vision, fish_randomness, cohesion_strength, shark_factor, food_attraction, obstacle_factor, shark_speed, food_per_step, fish_reinforcement_chance, daytime_duration, nighttime_duration, daytime_bonus):
         self.fish_vision = fish_vision
         self.shark_vision = shark_vision
         self.fish_randomness = fish_randomness
@@ -230,10 +214,6 @@ class Simulation:
         self.daytime_duration = daytime_duration
         self.nighttime_duration = nighttime_duration
         self.daytime_bonus = daytime_bonus
-
-
-
-        self.collect_data = collect_data
 
 
     def move_fish(self, old_grid, new_grid, daytime): # finialize timestep
@@ -320,8 +300,9 @@ class Simulation:
                     new_grid.set_position(x,y,old_local_cell)
 
 
+    # Perhaps some of the walls of arguments coming up should be delivered in seperate functions?
 
-    def iterate_grid(self, grid, steps, actions = None, intervals = 1):
+    def iterate_grid(self, grid, steps, actions = [], intervals = []):
         """parameters for functions passed into actions is (grid, i)"""
         new_grid = Grid()
         daytime = 1
@@ -355,34 +336,33 @@ class Simulation:
             new_grid.clear()
         return grid
 
-    def simulate(self, steps, actions = None, intervals = 1, obstacle_params, fish_params, shark_count):
-
-# fish params (+ defaults)
-# count = 2
-# radius = 8
-# chance = 0.3
-# obstacle params (+ defaults)
-# scale = 25, # scale of obstacle walls (lower is larger)
-# mask_scale = 60, # scale of larger structures
-# line_thickness = 0.01, # lower is thinner lines
-# line_count = 3, # amount of lines in the gradient
-# density_obstacle # mask cutoff
-
+    def simulate(self, steps, actions = None, intervals = 1, food_start_count = 0, fish_params = [], obstacle_params = [], shark_count = 12):
+        """ Initial fish school parameters \n
+            count = 2, radius = 8, chance = 0.3 \n
+            Obstacle generation parameters \n
+            scale = 25, (scale of obstacle walls, lower is larger) \n
+            mask_scale = 60, (scale of larger structures) \n
+            line_thickness = 0.01, (lower is thinner lines) \n
+            line_count = 3, (amount of lines in the gradient) \n
+            density_obstacle (mask cutoff)
+        """
         grid = Grid()
 
-        grid.place_food(self.food_start_count)
+        grid.place_food(food_start_count)
         grid.place_obstacles(*obstacle_params)
 
         grid.populate_fish(*fish_params)
         grid.populate_sharks(shark_count)
         self.iterate_grid(grid, steps, actions, intervals)
 
-def prep_data(col_steps, col_range):
-    global collect_steps, collect_range, fishcount, neighbourdata
-    collect_steps = col_steps
-    collect_range = col_range
-    fishcount = [0] * collect_steps
-    collect_range = collect_range
-    ncount = len(list(get_neighbourhood(0,0,collect_range))) + 1
-    neighbourdata = np.zeros(shape=(collect_steps, ncount), dtype=int)
-
+def collect_data(collect_range, array):
+        def inner_collect(g, t):
+            for y in range(0, SIZE_Y):
+                for x in range(0, SIZE_X):
+                    if g.grid[y][x].cell_type == CELL_FISH:
+                        nc = 0
+                        for (nx, ny) in get_neighbourhood(x,y, collect_range):
+                            if g.cmp_position(nx, ny, CELL_FISH):
+                                nc += 1
+                        array[t][nc] += 1
+        return inner_collect

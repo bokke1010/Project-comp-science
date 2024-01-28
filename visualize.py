@@ -8,7 +8,7 @@ circle_grid, colormap = None, None
 
 cell_colors = ["", VisualizationOptions.BG_COLOR, "yellow", "red", "white", "black"]
 
-def init(xsize, ysize, mode):
+def init(xsize, ysize):
     global writer, savefunc, circle_grid, colormap
     FFMpegWriter = manimation.writers['ffmpeg']
     metadata = dict(title='Movie Test', artist='Matplotlib',
@@ -36,7 +36,7 @@ def init(xsize, ysize, mode):
     circle_grid = ax.scatter(xv, yv, s= (2 * VisualizationOptions.PIXELS_PER_ENTITY)**2, marker='o', c=colormap, edgecolors=None)
     writer.setup(fig, f"{VisualizationOptions.FILE_NAME}.mp4", VisualizationOptions.PIXELS_PER_INCH)
 
-def visualize(grid):
+def visualize(grid, _):
     i=0
     for row in grid.grid:
         for cell in row:

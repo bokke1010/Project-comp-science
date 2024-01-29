@@ -9,13 +9,13 @@ main.SIZE_Y = GRID_Y
 collect_steps = 500
 collect_interval = 1
 collect_range = 2
-ncount = len(list(main.get_neighbourhood(0,0,collect_range))) + 1
+ncount = len(list(main.get_neighbourhood(0, 0, collect_range))) + 1
 neighbourdata = np.empty(shape=(collect_steps, ncount), dtype=int)
 
 runs = 30
 collected_data = np.zeros(shape=(runs, ncount), dtype=int)
 
-sim = main.Simulation( # Use default parameters
+sim = main.Simulation(  # Use default parameters
     fish_vision=FISH_VISION,
     shark_vision=SHARK_VISION,
     fish_randomness=FISH_RANDOMNESS,
@@ -31,21 +31,25 @@ sim = main.Simulation( # Use default parameters
     daytime_bonus=DAYTIME_VISION_BONUS
 )
 
-for vision in [2,4,6]:
+for vision in [2, 4, 6]:
     print(f"Simulating with {vision} fish vision per step")
     sim.fish_vision = vision
     for i in range(runs):
         neighbourdata.fill(0)
-        sim.simulate(collect_steps * collect_interval, [main.collect_data(collect_range, neighbourdata)], [collect_interval], FOOD_START_COUNT, [FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE], [], SHARK_START_COUNT)
-        collected_data[i] = np.sum(neighbourdata, axis=0)
+        sim.simulate(collect_steps * collect_interval, [main.collect_data(collect_range, neighbourdata)], [
+                     collect_interval], FOOD_START_COUNT, [FISH_START_COUNT, FISH_START_RADIUS, FISH_START_CHANCE], [], SHARK_START_COUNT)
+        collected_data[i] = np.sum(neighbourdata[300:, :], axis=0)
         print(f"Run {i} complete")
 
-    collected_data = collected_data / np.sum(collected_data, axis=1)[:,None]
-    plt.violinplot(collected_data, widths=0.7, showmedians=True, showextrema=False, positions=np.arange(ncount))
+    collected_data = collected_data / np.sum(collected_data, axis=1)[:, None]
+    plt.violinplot(collected_data, widths=0.7, showmedians=True,
+                   showextrema=False, positions=np.arange(ncount))
     plt.xticks(np.arange(ncount))
-    plt.title(f"Tuna distribution among {runs} simulations of {collect_steps * collect_interval} steps.")
+    plt.title(
+        f"Tuna distribution among {runs} simulations of {collect_steps * collect_interval} steps.")
     plt.xlabel("Neighbour count")
-    plt.xlim((-0.5,ncount-0.5))
+    plt.xlim((-0.5, ncount-0.5))
     plt.ylabel("Tuna fraction")
-    plt.savefig(f"violin-fishvision={vision}.svg", transparent=True, format = "svg", bbox_inches="tight")
+    plt.savefig(f"violin-fishvision={vision}.svg",
+                transparent=True, format="svg", bbox_inches="tight")
     plt.clf()

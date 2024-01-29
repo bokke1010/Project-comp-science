@@ -1,4 +1,4 @@
-# main.py
+# Project Computer Science - main.py
 # This file contains all grid and simulation code.
 # It can be imported by other files to collect data or
 # create visualizations.
@@ -417,8 +417,11 @@ class Simulation:
             new_grid.clear()
         return grid
 
-    def simulate(self, steps, actions=None, intervals=1, food_start_count=0, fish_params=[], obstacle_params=[], shark_count=12):
+    def simulate(self, steps, actions=[], intervals=[], food_start_count=0, fish_params=[], obstacle_params=[], shark_count=12):
         """ Run a simulation.
+
+        Actions are functions with signature (grid, i) -> None,
+        the function at index j in [actions] is executed every [intervals[j]] timesteps.
 
         Initial fish school parameters: \n
         count = 2, radius = 8, chance = 0.3 \n
@@ -436,7 +439,7 @@ class Simulation:
 
 
 def collect_data(collect_range, array):
-    """Fills a numpy array such that a[t][n] contains the number of fish with n neighbours at sample t"""
+    """Fills a numpy array such that a[t][n] contains the number of fish with n neighbours at sample t."""
     def inner_collect(g, t):
         for y in range(0, SIZE_Y):
             for x in range(0, SIZE_X):

@@ -13,7 +13,6 @@ ncount = len(list(main.get_neighbourhood(0,0,collect_range))) + 1
 neighbourdata = np.empty(shape=(collect_steps, ncount), dtype=int)
 
 runs = 20
-# runs = 30
 collected_data = np.zeros(shape=(runs, collect_steps), dtype=float)
 
 sim = main.Simulation( # Use default parameters

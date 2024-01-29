@@ -1,5 +1,5 @@
 # Simulation options
-TIME_STEPS = 100
+TIME_STEPS = 500
 
 GRID_X = 150
 GRID_Y = 150
@@ -26,7 +26,6 @@ FOOD_PER_STEP = 3
 SHARK_START_COUNT = 12
 
 # Fish settings
-FISH_SPEED = 1
 FISH_VISION = 2
 FISH_RANDOMNESS = 0.3
 

@@ -1,7 +1,7 @@
-# main.py - main file that contains simulation code
-#
-#
-#
+# main.py
+# This file contains all grid and simulation code.
+# It can be imported by other files to collect data or
+# create visualizations.
 
 from dataclasses import dataclass
 from random import randrange, random, choice
@@ -35,8 +35,10 @@ dir_to_angle = [0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3]
 
 
 def angle_to_dir(angle):
-    """Simple conversion from angle in radians to one of 6 directions.\n
-    Opposite of dir_to_angle, but as a function."""
+    """Simple conversion from angle in radians to one of 6 directions.
+
+    Opposite of dir_to_angle, but as a function.
+    """
     part = 2 * pi / DIR_COUNT
     result = int(floor((angle + part/2) / part)) % DIR_COUNT
     # print(angle / pi, result)
@@ -44,15 +46,19 @@ def angle_to_dir(angle):
 
 
 def offset_to_dir(x, y):
-    """Turn a nonzero vector into a direction.\n
-    This function uses a offset in the 2D plane, not grid coordinates."""
+    """Turn a nonzero vector into a direction.
+
+    This function uses a offset in the 2D plane, not grid coordinates.
+    """
     assert (x != 0 or y != 0)
     return angle_to_dir(atan2(y, x))
 
 
 def pos_to_dir(source_x, source_y, target_x, target_y):
-    """Turn a nonzero vector into a direction.\n
-    This function uses grid coordinates, not an offset in the 2D plane."""
+    """Turn a nonzero vector into a direction.
+
+    This function uses grid coordinates, not an offset in the 2D plane.
+    """
     dx = target_x - source_x
     dy = target_y - source_y
     m_source = source_y & 1
@@ -63,8 +69,10 @@ def pos_to_dir(source_x, source_y, target_x, target_y):
 
 
 def print_hline(len, up=True, down=True):
-    """DEPRECATED\n
-    Print a horizontal line of a given length, with the ends pointing up or down as required."""
+    """DEPRECATED
+
+    Print a horizontal line of a given length, with the ends pointing up or down as required.
+    """
     s, e = None, None
     if up and down:
         s, e = '├', '┤'
@@ -101,11 +109,8 @@ def dir_to_pos(x, y, dir, dist):
 
 def get_neighbourhood(mx, my, r=1, include_self=False):
     """Get all cells within [r] distance from [mx], [my], possibly including ([mx,my])."""
-    # Odd rows are shifted 1/2 to the right
-    # m is 1 if we are on an odd row
     m = my & 1
     for y in range(-r, r+1):
-        # X range goes from r+1 elements to 2r+1 elements
         for x in range(-r + ((abs(y) + m) // 2), r + 1 - ((abs(y) + 1 - m) // 2)):
             if x == 0 and y == 0 and not include_self:
                 continue
@@ -127,7 +132,6 @@ def calculate_distance(x1, y1, x2, y2):
 class Grid_cell:
     cell_type: int = 1  # CELL_EMPTY
     cell_dir: int = 0  # Unused by most cell types
-    food_lifespan: int = 0
 
     def __repr__(self):
         """Print some symbol to represent the cell. Can be used to display the grid as text"""
@@ -144,10 +148,12 @@ class Grid_cell:
 
 
 class Grid():
-    """A class to represent a singular grid in a cellular automata.\n
+    """A class to represent a singular grid in a cellular automata.
+
     This grid contains hexagonal cells and uses the globals SIZE_X, SIZE_Y to initialize the size.\n
     Using set_position, cmp_position and get_position takes any wraparound into account, so 0 <= x < SIZE_X (likewise for y) is not required.\n
-    The class also contains some functions to generate the different types of grid cells, including default generation settings."""
+    The class also contains some functions to generate the different types of grid cells, including default generation settings.
+    """
 
     def __init__(self):
         self.grid = [[Grid_cell()] * SIZE_X for _ in range(SIZE_Y)]
@@ -157,18 +163,24 @@ class Grid():
         return '│' + "│\n│".join((' ' * (i & 1)) + " ".join(map(repr, line)) + (' ' * (1 - (i & 1))) for (i, line) in enumerate(self.grid)) + '│'
 
     def set_position(self, x, y, value):
-        """Place a [value] at [x],[y].\n
-        Includes wraparound."""
+        """Place a [value] at [x],[y].
+
+        Includes wraparound.
+        """
         self.grid[y % SIZE_Y][x % SIZE_X] = value
 
     def get_position(self, x, y) -> Grid_cell:
-        """Get the grid cell at [x],[y].\n
-        Includes wraparound."""
+        """Get the grid cell at [x],[y].
+
+        Includes wraparound.
+        """
         return self.grid[y % SIZE_Y][x % SIZE_X]
 
     def cmp_position(self, x, y, type):
-        """Compare the grid cell type at [x],[y] with [type].\n
-        Includes wraparound."""
+        """Compare the grid cell type at [x],[y] with [type].
+
+        Includes wraparound.
+        """
         return self.get_position(x, y).cell_type == type
 
     def populate_fish(self, count=2, radius=8, chance=0.3):
@@ -217,7 +229,8 @@ class Grid():
         evenly spaced intervals of length 2 * [line_thickness].
 
         Then the second map with scale [mask_scale] only allows obstacles to
-        exist if it is above [density_obstacle] at that position."""
+        exist if it is above [density_obstacle] at that position.
+        """
         width = len(self.grid[0])
         height = len(self.grid)
 
@@ -368,8 +381,9 @@ class Simulation:
                     new_grid.set_position(x, y, old_local_cell)
 
     def iterate_grid(self, grid, steps, actions=[], intervals=[]):
-        """ Iterate a preconfigured grid. \n
-            You can pass functions to be executed periodically, parameters for functions passed into actions is (grid, i)
+        """ Iterate a preconfigured grid.
+
+        You can pass functions to be executed periodically, parameters for functions passed into actions is (grid, i)
         """
         new_grid = Grid()
         daytime = 1
@@ -404,11 +418,12 @@ class Simulation:
         return grid
 
     def simulate(self, steps, actions=None, intervals=1, food_start_count=0, fish_params=[], obstacle_params=[], shark_count=12):
-        """ Run a simulation. Array parameter explanation: \n
-            Initial fish school parameters \n
-            count = 2, radius = 8, chance = 0.3 \n
-            Obstacle generation parameters \n
-            scale = 25, mask_scale = 60, line_thickness = 0.01, line_count = 3, density_obstacle = 0.3
+        """ Run a simulation.
+
+        Initial fish school parameters: \n
+        count = 2, radius = 8, chance = 0.3 \n
+        Obstacle generation parameters: \n
+        scale = 25, mask_scale = 60, line_thickness = 0.01, line_count = 3, density_obstacle = 0.3
         """
         grid = Grid()
 

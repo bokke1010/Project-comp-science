@@ -84,7 +84,7 @@ for vision in [2,4,6]:
 
         plt.xticks(np.arange(ncount))
         plt.title(
-            f"Tuna distribution among {runs} simulations of {collect_steps * collect_interval} steps.")
+            f"Tuna distribution among {runs} simulations\nof steps {start_offset} to {start_offset + collect_steps * collect_interval} steps.")
         plt.xlabel("Neighbour count")
         plt.xlim((-0.5, ncount-0.5))
         plt.ylabel("Tuna population (%)")

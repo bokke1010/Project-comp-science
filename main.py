@@ -438,9 +438,11 @@ class Simulation:
         self.iterate_grid(grid, steps, actions, intervals)
 
 
-def collect_data(collect_range, array):
+def collect_data(collect_range, array, start = 0):
     """Fills a numpy array such that a[t][n] contains the number of fish with n neighbours at sample t."""
     def inner_collect(g, t):
+        if t < start:
+            return
         for y in range(0, SIZE_Y):
             for x in range(0, SIZE_X):
                 if g.grid[y][x].cell_type == CELL_FISH:
@@ -448,5 +450,5 @@ def collect_data(collect_range, array):
                     for (nx, ny) in get_neighbourhood(x, y, collect_range):
                         if g.cmp_position(nx, ny, CELL_FISH):
                             nc += 1
-                    array[t][nc] += 1
+                    array[t - start][nc] += 1
     return inner_collect

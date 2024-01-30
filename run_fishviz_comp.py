@@ -1,3 +1,9 @@
+# Project Computer Science - run_fishviz_comp.py
+# This file contains one of a few scripts that are used to generate
+# figures for the poster and report.
+# This file plots the fish clustering distribution for a few
+# values of the fish vision parameter.
+
 import main
 import numpy as np
 from matplotlib import pyplot as plt
@@ -15,7 +21,8 @@ neighbourdata = np.empty(shape=(collect_steps, ncount), dtype=int)
 runs = 30
 collected_data = np.zeros(shape=(runs, ncount), dtype=int)
 
-sim = main.Simulation(  # Use default parameters
+# Prepare simulation using default parameters.
+sim = main.Simulation(
     fish_vision=FISH_VISION,
     shark_vision=SHARK_VISION,
     fish_randomness=FISH_RANDOMNESS,
@@ -33,6 +40,8 @@ sim = main.Simulation(  # Use default parameters
 
 for vision in [2, 4, 6]:
     print(f"Simulating with {vision} fish vision per step")
+
+    # Simulate runs.
     sim.fish_vision = vision
     for i in range(runs):
         neighbourdata.fill(0)
@@ -41,6 +50,7 @@ for vision in [2, 4, 6]:
         collected_data[i] = np.sum(neighbourdata[300:, :], axis=0)
         print(f"Run {i} complete")
 
+    # Compile and plot data.
     collected_data = collected_data / np.sum(collected_data, axis=1)[:, None]
     plt.violinplot(collected_data, widths=0.7, showmedians=True,
                    showextrema=False, positions=np.arange(ncount))

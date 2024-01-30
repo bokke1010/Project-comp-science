@@ -1,3 +1,9 @@
+# Project Computer Science - run_video.py
+# This file contains a visualization script using visualize and main.
+# Then the video is saved using the visualizationparameters in
+# parameters.py.
+# Using this script, or any other script using visualize, requires FFMpeg.
+
 import main
 import numpy as np
 from matplotlib import pyplot as plt
@@ -15,7 +21,8 @@ neighbourdata = np.zeros(shape=(collect_steps, ncount), dtype=int)
 main.SIZE_X = 120
 main.SIZE_Y = 120
 
-sim = main.Simulation(  # Use default parameters
+# Prepare simulation using modified parameters.
+sim = main.Simulation(
     fish_vision=FISH_VISION,
     shark_vision=3,
     fish_randomness=FISH_RANDOMNESS,

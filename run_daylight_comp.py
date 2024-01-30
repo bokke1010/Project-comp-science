@@ -78,7 +78,7 @@ if task == 1 or task == 2:
     means = np.mean(collected_data, axis=0)
     plt.fill_between(x, means - stddev, means + stddev, linewidth=0, color="gold", label="std dev", zorder = 2)
     plt.plot(x, np.median(collected_data, axis=0), linewidth=1.5, color="black", label="median", zorder = 3)
-
+    plt.axvline(x=400, c='red', label= "point where simulation becomes stable")
     plt.legend()
     # Clean up & save plot
     plt.title(

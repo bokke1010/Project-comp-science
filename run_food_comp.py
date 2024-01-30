@@ -66,7 +66,7 @@ for food in [0.5, 1.5, 3, 6]:
         collected_data = np.genfromtxt(f"data/foodperstep={food}.csv", delimiter=',')
 
     if task == 1 or task == 2:
-        parts = plt.violinplot(collected_data, widths=0.7, showmedians=True,
+        parts = plt.violinplot(collected_data*100, widths=0.7, showmedians=True,
                        showextrema=True, positions=np.arange(ncount))
 
         for pc in parts['bodies']:
@@ -83,7 +83,7 @@ for food in [0.5, 1.5, 3, 6]:
             f"Tuna distribution among {runs} simulations of steps {start_offset} to {start_offset + collect_steps}.")
         plt.xlabel("Neighbour count")
         plt.xlim((-0.5, ncount-0.5))
-        plt.ylabel("Tuna fraction")
+        plt.ylabel("Tuna population (%)")
         plt.savefig(f"violin-foodperstep={food}.svg",
                     transparent=True, format="svg", bbox_inches="tight")
         plt.clf()

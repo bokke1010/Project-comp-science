@@ -70,7 +70,7 @@ for vision in [2,4,6]:
         collected_data = np.genfromtxt(f"data/fishvision={vision}.csv", delimiter=',')
 
     if task == 1 or task == 2:
-        parts = plt.violinplot(collected_data, widths=0.7, showmedians=True,
+        parts = plt.violinplot(100 * collected_data, widths=0.7, showmedians=True,
                        showextrema=True, positions=np.arange(ncount))
         
 
@@ -84,7 +84,7 @@ for vision in [2,4,6]:
 
         plt.xticks(np.arange(ncount))
         plt.title(
-            f"Tuna distribution among {runs} simulations of {collect_steps * collect_interval} steps.")
+            f"Tuna distribution among {runs} simulations\nof steps {start_offset} to {start_offset + collect_steps * collect_interval} steps.")
         plt.xlabel("Neighbour count")
         plt.xlim((-0.5, ncount-0.5))
         plt.ylabel("Tuna population (%)")

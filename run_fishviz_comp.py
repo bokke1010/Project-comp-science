@@ -70,7 +70,7 @@ for vision in [2,4,6]:
         collected_data = np.genfromtxt(f"data/fishvision={vision}.csv", delimiter=',')
 
     if task == 1 or task == 2:
-        parts = plt.violinplot(collected_data, widths=0.7, showmedians=True,
+        parts = plt.violinplot(100 * collected_data, widths=0.7, showmedians=True,
                        showextrema=True, positions=np.arange(ncount))
         
 

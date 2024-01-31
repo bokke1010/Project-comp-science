@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_ind, f_oneway
 from parameters import *
 
 def preform_t_test(df1, df2, column):
@@ -12,7 +12,7 @@ def preform_t_test(df1, df2, column):
     return p_value
 
 
-def food_comp():
+def food_comp_t_test():
     df0_5 = pd.read_csv("data/foodperstep=0.5.csv", index_col=False, header=None)
     df1_5 = pd.read_csv("data/foodperstep=1.5.csv", index_col=False, header=None)
     df3 = pd.read_csv("data/foodperstep=3.csv", index_col=False, header=None)
@@ -38,7 +38,7 @@ def food_comp():
     dataset = [[preform_t_test(dfs[j], dfs[j+1], i) for i in [6]] for j in range(3)]
     print(dataset)
     
-def vision():
+def vision_t_test():
     df2 = pd.read_csv("data/fishvision=2.csv", index_col=False, header=None)
     df4 = pd.read_csv("data/fishvision=4.csv", index_col=False, header=None)
     df6 = pd.read_csv("data/fishvision=6.csv", index_col=False, header=None)
@@ -63,5 +63,5 @@ def vision():
     dataset = [[preform_t_test(dfs[j], dfs[j+1], i) for i in [6]] for j in range(2)]
     print(dataset)
 
-vision()
-food_comp()
+vision_t_test()
+food_comp_t_test()

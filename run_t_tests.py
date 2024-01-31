@@ -33,7 +33,8 @@ def food_comp_t_test():
     plt.axhline(y=0.05, color='r', linestyle='--', label=r'$\alpha = 0.05$')
 
     plt.legend()
-    plt.show()
+    plt.savefig(f"T_TEST_FOOD.svg",
+            transparent=True, format="svg", bbox_inches="tight")
 
     dataset = [[preform_t_test(dfs[j], dfs[j+1], i) for i in [6]] for j in range(3)]
     print(dataset)
@@ -58,7 +59,9 @@ def vision_t_test():
     plt.axhline(y=0.05, color='r', linestyle='--', label=r'$\alpha = 0.05$')
 
     plt.legend()
-    plt.show()
+    plt.savefig(f"T_TEST_VISION.svg",
+            transparent=True, format="svg", bbox_inches="tight")
+
 
     dataset = [[preform_t_test(dfs[j], dfs[j+1], i) for i in [6]] for j in range(2)]
     print(dataset)

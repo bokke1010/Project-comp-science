@@ -8,7 +8,9 @@ by sharks, all the while getting blocked by rocks.
 Including stochastic effects and a large number of parameters to affect
 different systems in the simulation.
 
-
+To run:
+Choose one of the run_*_comp files or run_video using python 3
+to generate plots or visualizations.
 
 File descriptions:
 main.py

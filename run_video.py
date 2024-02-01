@@ -11,7 +11,7 @@ from parameters import *
 import visualize
 
 
-collect_steps = 180
+collect_steps = 400
 collect_interval = 1
 collect_range = 2
 ncount = len(list(main.get_neighbourhood(0, 0, collect_range))) + 1
@@ -24,7 +24,7 @@ main.SIZE_Y = 120
 # Prepare simulation using modified parameters.
 sim = main.Simulation(
     fish_vision=FISH_VISION,
-    shark_vision=3,
+    shark_vision=2,
     fish_randomness=FISH_RANDOMNESS,
     cohesion_strength=COHESION_STRENGTH,
     shark_factor=SHARK_FACTOR,

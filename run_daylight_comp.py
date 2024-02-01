@@ -9,6 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from parameters import *
 
+# Get execution mode.
 task = int(input("task? 0 for save to file, 1 for plot from file, 2 for both.\n> "))
 
 main.SIZE_X = GRID_X
@@ -24,7 +25,7 @@ runs = 20
 collected_data = np.zeros(shape=(runs, collect_steps), dtype=float)
 
 if task == 0 or task == 2:
-
+    # Generate data using simulations.
     # Prepare simulation using default parameters.
     sim = main.Simulation(
         fish_vision=FISH_VISION,
@@ -55,7 +56,8 @@ if task == 0 or task == 2:
 
     np.savetxt(f"data/daylightcomp.csv", collected_data, delimiter=',')
 
-if task == 1:
+else:
+    # Load data from previous simulations instead.
     collected_data = np.genfromtxt("data/daylightcomp.csv", delimiter=',')
 
 if task == 1 or task == 2:
@@ -79,8 +81,9 @@ if task == 1 or task == 2:
     plt.fill_between(x, means - stddev, means + stddev, linewidth=0, color="gold", label="std dev", zorder = 2)
     plt.plot(x, np.median(collected_data, axis=0), linewidth=1.5, color="black", label="median", zorder = 3)
     plt.axvline(x=400, c='red', label= "point where simulation becomes stable")
-    plt.legend()
+
     # Clean up & save plot
+    plt.legend()
     plt.title(
         f"Tuna distribution among {runs} simulations of {collect_steps * collect_interval} steps.")
     plt.xlabel("Time")

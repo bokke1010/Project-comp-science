@@ -9,6 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from parameters import *
 
+# Get execution mode.
 task = int(input("task? 0 for save to file, 1 for plot from file, 2 for both.\n> "))
 
 main.SIZE_X = GRID_X
@@ -47,6 +48,7 @@ if task == 0 or task == 2:
 for food in [0.5, 1.5, 3, 6]:
 
     if task == 0 or task == 2:
+        # Generate data using simulations.
         print(f"Simulating with {food} food per step")
 
         # Simulate runs.
@@ -62,7 +64,8 @@ for food in [0.5, 1.5, 3, 6]:
         collected_data = collected_data / np.sum(collected_data, axis=1)[:, None]
         np.savetxt(f"data/foodperstep={food}.csv", collected_data, delimiter=',')
 
-    if task == 1:
+    else:
+        # Load data from previous simulation instead.
         collected_data = np.genfromtxt(f"data/foodperstep={food}.csv", delimiter=',')
 
     if task == 1 or task == 2:

@@ -9,6 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from parameters import *
 
+# Get execution mode.
 task = int(input("task? 0 for save to file, 1 for plot from file, 2 for both.\n> "))
 
 main.SIZE_X = GRID_X
@@ -51,6 +52,7 @@ if task == 0 or task == 2:
 for vision in [2,4,6]:
 
     if task == 0 or task == 2:
+        # Run simulation to generate data.
         print(f"Simulating with {vision} fish vision per step")
 
         # Simulate runs.
@@ -66,13 +68,14 @@ for vision in [2,4,6]:
         collected_data = collected_data / np.sum(collected_data, axis=1)[:, None]
         np.savetxt(f"data/fishvision={vision}.csv", collected_data, delimiter=',')
 
-    if task == 1:
+    else:
+        # Load previously generated data instead.
         collected_data = np.genfromtxt(f"data/fishvision={vision}.csv", delimiter=',')
 
     if task == 1 or task == 2:
+        # Generate plot.
         parts = plt.violinplot(100 * collected_data, widths=0.7, showmedians=True,
                        showextrema=True, positions=np.arange(ncount))
-        
 
         for pc in parts['bodies']:
             pc.set_facecolor('purple')
